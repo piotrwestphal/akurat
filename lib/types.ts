@@ -5,3 +5,13 @@ export type WebappDistributionParams = Readonly<{
         distributionId:string
     }>
 }>
+
+export type UserParams = Readonly<{
+    email: string
+    password: string
+}>
+
+export type UserMgmtParams = Readonly<{
+    adminUsers: UserParams[]
+    autoConfirmedEmails: string[]
+}>

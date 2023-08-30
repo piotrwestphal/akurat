@@ -21,7 +21,13 @@
     "strictPropertyInitialization": false,
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    // also update the moduleNameMapper in jest.config.js
+    "paths": {
+      "@lambda-types": [
+        "lib/lambda.types"
+      ]
+    }
   },
   "exclude": [
     "node_modules",

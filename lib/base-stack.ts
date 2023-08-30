@@ -2,9 +2,9 @@ import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib
 import {Construct} from 'constructs'
 import {Certificate} from 'aws-cdk-lib/aws-certificatemanager'
 import {ARecord, HostedZone, RecordTarget} from 'aws-cdk-lib/aws-route53'
-import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
-import {LambdaIntegration, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {
     AllowedMethods,
     CachedMethods,
@@ -21,14 +21,22 @@ import {ApiGateway, CloudFrontTarget} from 'aws-cdk-lib/aws-route53-targets'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {S3Origin} from 'aws-cdk-lib/aws-cloudfront-origins'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
-import {WebappDistributionParams} from './types'
+import {UserMgmtParams, WebappDistributionParams} from './types'
 import {globalCommonLambdaProps} from './cdk.consts'
-import {join} from 'path'
+import {UserMgmt} from "./user-mgmt/user-mgmt";
+import {AuthService} from "./auth-service/auth-service";
+import {
+    distributionDomainNameEnvKey,
+    restApiEndpointOutputKey,
+    userPoolClientIdOutputKey,
+    userPoolIdOutputKey
+} from "./consts";
 
 type BaseStackProps = Readonly<{
     envName: string
     artifactsBucketName: string
-    // TODO: is it all right to have two separate certs?
+    userMgmt: UserMgmtParams
+    logRetention: RetentionDays
     certificateArns?: {
         apiGw: string
         cloudFront: string
@@ -41,6 +49,8 @@ export class BaseStack extends Stack {
                 id: string, {
                     envName,
                     artifactsBucketName,
+                    userMgmt,
+                    logRetention,
                     certificateArns,
                     ...props
                 }: BaseStackProps) {
@@ -65,11 +75,27 @@ export class BaseStack extends Stack {
         const webappBucketOrigin = new S3Origin(webappBucket, {originAccessIdentity})
 
         const restApi = new RestApi(this, 'RestApi', {
-            description: 'Rest api for application',
+            description: `[${envName}] REST api for application`,
             cloudWatchRole: true,
             deployOptions: {
                 stageName: envName
             },
+        })
+
+        const restApiV1Resource = restApi.root.addResource('v1')
+
+        const {authorizer, userPool} = new UserMgmt(this, 'UserMgmt', {
+            envName,
+            restApiV1Resource,
+            userMgmt,
+            logRetention,
+        })
+
+        const {userPoolClientId} = new AuthService(this, 'AuthService', {
+            restApi,
+            restApiV1Resource,
+            userPool,
+            logRetention,
         })
 
         const distributionProps: DistributionProps = {
@@ -131,7 +157,7 @@ export class BaseStack extends Stack {
             })
         } else {
             webappDistribution = new Distribution(this, 'WebappDistribution', distributionProps)
-            new CfnOutput(this, 'DistributionDomainName', {value: webappDistribution.domainName})
+            new CfnOutput(this, distributionDomainNameEnvKey, {value: webappDistribution.domainName})
         }
 
         new BucketDeployment(this, 'WebappParamsDeployment', {
@@ -147,13 +173,8 @@ export class BaseStack extends Stack {
                 } satisfies WebappDistributionParams)],
         })
 
-        const tempFunc = new NodejsFunction(this, 'TempFunction', {
-            entry: join(__dirname, 'lambdas', 'hello.ts'),
-            ...commonLambdaProps
-        })
-
-        restApi.root
-            .addResource('hello')
-            .addMethod('GET', new LambdaIntegration(tempFunc))
+        new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
+        new CfnOutput(this, userPoolClientIdOutputKey, {value: userPoolClientId})
+        new CfnOutput(this, userPoolIdOutputKey, {value: userPool.userPoolId})
     }
 }
