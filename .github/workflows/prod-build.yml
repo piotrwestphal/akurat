@@ -53,7 +53,7 @@ jobs:
 
       - name: AWS CDK diff
         run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
 
       - name: Add PR comment with diff result
         uses: actions/github-script@v6

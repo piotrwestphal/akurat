@@ -62,7 +62,7 @@ jobs:
 
       - name: AWS CDK deploy
         run: |
-          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${DOMAIN_NAME} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${{ secrets.DOMAIN_NAME }} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
 
       - name: Archive AWS CDK deployment outputs
         uses: actions/upload-artifact@v3
