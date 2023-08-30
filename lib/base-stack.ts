@@ -2,10 +2,9 @@ import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib
 import {Construct} from 'constructs'
 import {Certificate} from 'aws-cdk-lib/aws-certificatemanager'
 import {ARecord, HostedZone, RecordTarget} from 'aws-cdk-lib/aws-route53'
-import {NodejsFunction} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {join} from 'path'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
-import {Runtime} from 'aws-cdk-lib/aws-lambda'
 import {LambdaIntegration, RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {
     AllowedMethods,
@@ -23,6 +22,7 @@ import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {S3Origin} from 'aws-cdk-lib/aws-cloudfront-origins'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
 import {WebappDistributionParams} from './types'
+import {globalCommonLambdaProps} from "./cdk.consts";
 
 type BaseStackProps = Readonly<{
     envName: string
@@ -44,6 +44,11 @@ export class BaseStack extends Stack {
                     ...props
                 }: BaseStackProps) {
         super(scope, id, props)
+
+        const commonLambdaProps: Partial<NodejsFunctionProps> = {
+            logRetention: RetentionDays.ONE_WEEK,
+            ...globalCommonLambdaProps
+        }
 
         const domainName = this.node.tryGetContext('domainName') as string | undefined
 
@@ -108,11 +113,7 @@ export class BaseStack extends Stack {
 
         const tempFunc = new NodejsFunction(this, 'TempFunction', {
             entry: join(__dirname, 'lambdas', 'hello.ts'),
-            logRetention: RetentionDays.ONE_DAY,
-            // TODO: extract as common config
-            // use this to prevent accidental dependencies from being dragged into a lambda bundle
-            depsLockFilePath: join(__dirname, 'no-deps-package-lock.json'),
-            runtime: Runtime.NODEJS_18_X,
+            ...commonLambdaProps
         })
 
         const restApi = new RestApi(this, 'RestApi', {

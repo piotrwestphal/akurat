@@ -37,6 +37,10 @@ jobs:
         run: |
           aws s3 cp s3://akurat-artifacts/distribution/dev/config.json cdk.context.json
 
+      - name: Temp
+        run: |
+          npm install -g esbuild
+
       - name: AWS CDK diff
         uses: youyo/aws-cdk-github-actions@v2
         with:
