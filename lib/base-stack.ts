@@ -10,6 +10,7 @@ import {
     CachedMethods,
     CachePolicy,
     Distribution,
+    DistributionProps,
     HttpVersion,
     OriginAccessIdentity,
     PriceClass,
@@ -63,9 +64,15 @@ export class BaseStack extends Stack {
         const originAccessIdentity = new OriginAccessIdentity(this, 'CloudFrontOriginAccessIdentity')
         const webappBucketOrigin = new S3Origin(webappBucket, {originAccessIdentity})
 
-        // TODO: extract main params and include in if block -> certificateArns && domainName
-        const webappDistribution = new Distribution(this, 'WebappDistribution', {
-            domainNames: certificateArns && domainName ? [domainName] : undefined,
+        const restApi = new RestApi(this, 'RestApi', {
+            description: 'Rest api for application',
+            cloudWatchRole: true,
+            deployOptions: {
+                stageName: envName
+            },
+        })
+
+        const distributionProps: DistributionProps = {
             defaultRootObject: 'index.html',
             defaultBehavior: {
                 origin: webappBucketOrigin,
@@ -91,46 +98,18 @@ export class BaseStack extends Stack {
             ],
             priceClass: PriceClass.PRICE_CLASS_100,
             enabled: true,
-            certificate: certificateArns && domainName
-                ? Certificate.fromCertificateArn(this, 'CFCertificate', certificateArns.cloudFront)
-                : undefined,
             minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
             httpVersion: HttpVersion.HTTP2,
-        })
+        }
 
-        new BucketDeployment(this, 'WebappParamsDeployment', {
-            destinationBucket: Bucket.fromBucketName(this, 'ArtifactsBucket', artifactsBucketName),
-            destinationKeyPrefix: `distribution/${envName}`,
-            sources: [Source.jsonData('config.json',
-                {
-                    webappBucketName: webappBucket.bucketName,
-                    webappDistribution: {
-                        domainName: webappDistribution.domainName,
-                        distributionId: webappDistribution.distributionId,
-                    },
-                } satisfies WebappDistributionParams)],
-        })
-
-        const tempFunc = new NodejsFunction(this, 'TempFunction', {
-            entry: join(__dirname, 'lambdas', 'hello.ts'),
-            ...commonLambdaProps
-        })
-
-        const restApi = new RestApi(this, 'RestApi', {
-            description: 'Rest api for application',
-            cloudWatchRole: true,
-            deployOptions: {
-                stageName: envName
-            },
-        })
-
-        restApi.root
-            .addResource('hello')
-            // TODO: enable
-            .addMethod('GET', new LambdaIntegration(tempFunc))
-        // .addMethod('GET', new MockIntegration())
+        let webappDistribution: Distribution
 
         if (certificateArns && domainName) {
+            webappDistribution = new Distribution(this, 'WebappDistribution', {
+                domainNames: [domainName],
+                certificate: Certificate.fromCertificateArn(this, 'CFCertificate', certificateArns.cloudFront),
+                ...distributionProps
+            })
             const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {domainName})
 
             restApi.addDomainName('ApiGwDomainName', {
@@ -150,8 +129,31 @@ export class BaseStack extends Stack {
                     new CloudFrontTarget(webappDistribution)
                 ),
             })
+        } else {
+            webappDistribution = new Distribution(this, 'WebappDistribution', distributionProps)
+            new CfnOutput(this, 'DistributionDomainName', {value: webappDistribution.domainName})
         }
 
-        new CfnOutput(this, 'DistributionDomainName', {value: webappDistribution.domainName})
+        new BucketDeployment(this, 'WebappParamsDeployment', {
+            destinationBucket: Bucket.fromBucketName(this, 'ArtifactsBucket', artifactsBucketName),
+            destinationKeyPrefix: `distribution/${envName}`,
+            sources: [Source.jsonData('config.json',
+                {
+                    webappBucketName: webappBucket.bucketName,
+                    webappDistribution: {
+                        domainName: webappDistribution.domainName,
+                        distributionId: webappDistribution.distributionId,
+                    },
+                } satisfies WebappDistributionParams)],
+        })
+
+        const tempFunc = new NodejsFunction(this, 'TempFunction', {
+            entry: join(__dirname, 'lambdas', 'hello.ts'),
+            ...commonLambdaProps
+        })
+
+        restApi.root
+            .addResource('hello')
+            .addMethod('GET', new LambdaIntegration(tempFunc))
     }
 }

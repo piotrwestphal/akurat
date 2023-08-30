@@ -9,6 +9,9 @@ jobs:
   build:
     name: Build Prod Job
     runs-on: ubuntu-latest
+    env:
+      CDK_STACK_NAME: prod-AkuratStack
+      CDK_DIFF_OUT_FILE: diff.out
     steps:
       - uses: actions/checkout@v3
 
@@ -37,9 +40,36 @@ jobs:
         run: |
           aws s3 cp s3://akurat-artifacts/distribution/prod/config.json cdk.context.json
 
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+
+      - name: AWS CDK synth
+        run: |
+          cdk synth ${{ env.CDK_STACK_NAME }}
+
       - name: AWS CDK diff
-        uses: youyo/aws-cdk-github-actions@v2
+        run: |
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+
+      - name: Add PR comment with diff result
+        uses: actions/github-script@v6
         with:
-          cdk_subcommand: 'diff'
-          cdk_stack: 'prod-AkuratStack'
-          actions_comment: true
+          script: |
+            var fs = require('fs')
+            const diff = fs.readFileSync('${{ env.CDK_DIFF_OUT_FILE }}').toString().trimEnd()
+            const output = ['👋 Below you find the result of running the command on the \`${{ env.CDK_STACK_NAME }}\` AWS CDK Stack']
+            output.push(['<details><summary>AWS CDK diff</summary>\n\n\`\`\`\n' + diff + '\n\`\`\`\n</details>\n'])
+            output.push([`*Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`])
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output.join('\n')
+            })
+
+      - name: Archive AWS CDK diff outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: cdk-diff-outputs
+          path: ${{ env.CDK_DIFF_OUT_FILE }}
