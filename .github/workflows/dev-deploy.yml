@@ -1,0 +1,48 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build:
+    name: Deploy Dev Job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Unit tests
+        run: |
+          npm test
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+          aws-region: eu-central-1
+
+      - name: Copy stack cfn parameters from S3 bucket and set as cdk context
+        working-directory: ./cdk
+        run: |
+          aws s3 cp s3://akurat-artifacts/distribution/dev/config.json cdk.context.json
+
+      - name: AWS CDK deploy
+        uses: youyo/aws-cdk-github-actions@v2
+        with:
+          working_dir: 'cdk'
+          cdk_subcommand: 'deploy'
+          cdk_stack: 'dev-AkuratStack'
+          cdk_args: '--require-approval never --ci'
+          actions_comment: false

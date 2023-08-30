@@ -1,0 +1,69 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Deploy Prod Job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            cdk/package-lock.json
+
+      - name: Webapp - Install dependencies
+        run: |
+          npm ci
+
+      - name: Webapp - Build
+        env:
+          NODE_ENV: production
+        run: |
+          npm run build
+
+      - name: CDK - Install dependencies
+        working-directory: ./cdk
+        run: |
+          npm ci
+
+      - name: CDK - Build
+        working-directory: ./cdk
+        run: |
+          npm run build
+
+      - name: CDK - Install dependencies
+        working-directory: ./cdk
+        run: |
+          npm ci
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+          aws-region: eu-central-1
+
+      - name: Copy stack cfn parameters from S3 bucket and set as cdk context
+        working-directory: ./cdk
+        run: |
+          aws s3 cp s3://akurat-artifacts/distribution/prod/config.json cdk.context.json
+
+      - name: AWS CDK deploy
+        uses: youyo/aws-cdk-github-actions@v2
+        env:
+          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+        with:
+          working_dir: 'cdk'
+          cdk_subcommand: 'deploy'
+          cdk_stack: 'prod-AkuratWebappStack'
+          cdk_args: '--require-approval never --ci --context domainName=${DOMAIN_NAME}'
+          actions_comment: false
