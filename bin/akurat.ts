@@ -1,21 +1,31 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { AkuratStack } from '../lib/akurat-stack';
+import 'source-map-support/register'
+import * as cdk from 'aws-cdk-lib'
+import {RootStack} from '../lib/root-stack'
+import {BaseStack} from '../lib/base-stack'
 
-const app = new cdk.App();
-new AkuratStack(app, 'AkuratStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
+const app = new cdk.App()
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+new RootStack(app, 'AkuratRootStack', {
+    description: 'Root infrastructure for the Akurat App',
+    env: {account: '412644677543', region: 'eu-central-1'},
+    artifactsBucketName: 'akurat-artifacts'
+})
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+new BaseStack(app, 'dev-AkuratStack', {
+    description: 'Backend infrastructure for the Akurat App',
+    env: {account: '412644677543', region: 'eu-central-1'},
+    envName: 'dev',
+    artifactsBucketName: 'akurat-artifacts'
+})
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+new BaseStack(app, 'prod-AkuratStack', {
+    description: 'Backend infrastructure for the Akurat App',
+    env: {account: '412644677543', region: 'eu-central-1'},
+    envName: 'prod',
+    artifactsBucketName: 'akurat-artifacts',
+    certificateArns: {
+        apiGw: 'arn:aws:acm:eu-central-1:412644677543:certificate/06027de2-867f-4b00-aad5-096ebe9bb567',
+        cloudFront: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997'
+    }
+})
