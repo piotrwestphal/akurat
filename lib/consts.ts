@@ -1,4 +1,4 @@
-export const restApiEndpointOutputKey = 'RestApi'
+export const restApiEndpointOutputKey = 'RestApiEndpoint'
 export const userPoolClientIdOutputKey = 'UserPoolClientId'
 export const userPoolIdOutputKey = 'UserPoolId'
 export const distributionDomainNameEnvKey = 'DistributionDomainName'
