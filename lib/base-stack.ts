@@ -109,6 +109,9 @@ export class BaseStack extends Stack {
         const tempFunc = new NodejsFunction(this, 'TempFunction', {
             entry: join(__dirname, 'lambdas', 'hello.ts'),
             logRetention: RetentionDays.ONE_DAY,
+            // TODO: extract as common config
+            // use this to prevent accidental dependencies from being dragged into a lambda bundle
+            depsLockFilePath: join(__dirname, 'no-deps-package-lock.json'),
             runtime: Runtime.NODEJS_18_X,
         })
 
