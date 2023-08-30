@@ -9,6 +9,10 @@ jobs:
   build:
     name: Deploy Prod Job
     runs-on: ubuntu-latest
+    env:
+      CDK_STACK_NAME: prod-AkuratStack
+      CDK_DIFF_OUT_FILE: diff.out
+      CDK_OUTPUTS_FILE: outputs.json
     steps:
       - uses: actions/checkout@v3
 
@@ -16,34 +20,15 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            cdk/package-lock.json
 
-      - name: Webapp - Install dependencies
+      - name: Build
         run: |
           npm ci
-
-      - name: Webapp - Build
-        env:
-          NODE_ENV: production
-        run: |
           npm run build
 
-      - name: CDK - Install dependencies
-        working-directory: ./cdk
+      - name: Unit tests
         run: |
-          npm ci
-
-      - name: CDK - Build
-        working-directory: ./cdk
-        run: |
-          npm run build
-
-      - name: CDK - Install dependencies
-        working-directory: ./cdk
-        run: |
-          npm ci
+          npm test
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -57,13 +42,30 @@ jobs:
         run: |
           aws s3 cp s3://akurat-artifacts/distribution/prod/config.json cdk.context.json
 
-      - name: AWS CDK deploy
-        uses: youyo/aws-cdk-github-actions@v2
-        env:
-          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+
+      - name: AWS CDK synth
+        run: |
+          cdk synth ${{ env.CDK_STACK_NAME }}
+
+      - name: AWS CDK diff
+        run: |
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+
+      - name: Archive AWS CDK diff outputs
+        uses: actions/upload-artifact@v3
         with:
-          working_dir: 'cdk'
-          cdk_subcommand: 'deploy'
-          cdk_stack: 'prod-AkuratWebappStack'
-          cdk_args: '--require-approval never --ci --context domainName=${DOMAIN_NAME}'
-          actions_comment: false
+          name: cdk-diff-outputs
+          path: ${{ env.CDK_DIFF_OUT_FILE }}
+
+      - name: AWS CDK deploy
+        run: |
+          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${DOMAIN_NAME} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+
+      - name: Archive AWS CDK deployment outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: cdk-deploy-outputs
+          path: ${{ env.CDK_OUTPUTS_FILE }}
