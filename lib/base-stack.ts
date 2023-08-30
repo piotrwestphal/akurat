@@ -2,9 +2,9 @@ import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib
 import {Construct} from 'constructs'
 import {Certificate} from 'aws-cdk-lib/aws-certificatemanager'
 import {ARecord, HostedZone, RecordTarget} from 'aws-cdk-lib/aws-route53'
-import {NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
-import {MockIntegration, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {LambdaIntegration, RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {
     AllowedMethods,
     CachedMethods,
@@ -21,7 +21,8 @@ import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {S3Origin} from 'aws-cdk-lib/aws-cloudfront-origins'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
 import {WebappDistributionParams} from './types'
-import {globalCommonLambdaProps} from "./cdk.consts";
+import {globalCommonLambdaProps} from './cdk.consts'
+import {join} from 'path'
 
 type BaseStackProps = Readonly<{
     envName: string
@@ -110,10 +111,10 @@ export class BaseStack extends Stack {
                 } satisfies WebappDistributionParams)],
         })
 
-        // const tempFunc = new NodejsFunction(this, 'TempFunction', {
-        //     entry: join(__dirname, 'lambdas', 'hello.ts'),
-        //     ...commonLambdaProps
-        // })
+        const tempFunc = new NodejsFunction(this, 'TempFunction', {
+            entry: join(__dirname, 'lambdas', 'hello.ts'),
+            ...commonLambdaProps
+        })
 
         const restApi = new RestApi(this, 'RestApi', {
             description: 'Rest api for application',
@@ -126,8 +127,8 @@ export class BaseStack extends Stack {
         restApi.root
             .addResource('hello')
             // TODO: enable
-            // .addMethod('GET', new LambdaIntegration(tempFunc))
-            .addMethod('GET', new MockIntegration())
+            .addMethod('GET', new LambdaIntegration(tempFunc))
+        // .addMethod('GET', new MockIntegration())
 
         if (certificateArns && domainName) {
             const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {domainName})
