@@ -9,6 +9,10 @@ jobs:
   build:
     name: Deploy Dev Job
     runs-on: ubuntu-latest
+    env:
+      CDK_STACK_NAME: dev-AkuratStack
+      CDK_DIFF_OUT_FILE: diff.out
+      CDK_OUTPUTS_FILE: outputs.json
     steps:
       - uses: actions/checkout@v3
 
@@ -34,15 +38,33 @@ jobs:
           aws-region: eu-central-1
 
       - name: Copy stack cfn parameters from S3 bucket and set as cdk context
-        working-directory: ./cdk
         run: |
           aws s3 cp s3://akurat-artifacts/distribution/dev/config.json cdk.context.json
 
-      - name: AWS CDK deploy
-        uses: youyo/aws-cdk-github-actions@v2
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+
+      - name: AWS CDK synth
+        run: |
+          cdk synth ${{ env.CDK_STACK_NAME }}
+
+      - name: AWS CDK diff
+        run: |
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+
+      - name: Archive AWS CDK diff outputs
+        uses: actions/upload-artifact@v3
         with:
-          working_dir: 'cdk'
-          cdk_subcommand: 'deploy'
-          cdk_stack: 'dev-AkuratStack'
-          cdk_args: '--require-approval never --ci'
-          actions_comment: false
+          name: cdk-diff-outputs
+          path: ${{ env.CDK_DIFF_OUT_FILE }}
+
+      - name: AWS CDK deploy
+        run: |
+          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+
+      - name: Archive AWS CDK deployment outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: cdk-deploy-outputs
+          path: ${{ env.CDK_OUTPUTS_FILE }}
