@@ -38,7 +38,6 @@ jobs:
           aws-region: eu-central-1
 
       - name: Copy stack cfn parameters from S3 bucket and set as cdk context
-        working-directory: ./cdk
         run: |
           aws s3 cp s3://akurat-artifacts/distribution/prod/config.json cdk.context.json
 
