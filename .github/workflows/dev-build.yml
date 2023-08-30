@@ -39,6 +39,8 @@ jobs:
 
       - name: AWS CDK diff
         uses: youyo/aws-cdk-github-actions@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           cdk_subcommand: 'diff'
           cdk_stack: 'dev-AkuratStack'
