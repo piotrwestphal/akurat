@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CDK_STACK_NAME: ${{ github.event.pull_request.number }}-AkuratStack
-      CDK_OUTPUTS_PATH: int/outputs.json
+      CDK_OUTPUTS_FILE: int/outputs.json
     steps:
       - uses: actions/checkout@v3
 
