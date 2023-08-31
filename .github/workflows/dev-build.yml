@@ -45,11 +45,11 @@ jobs:
 
       - name: AWS CDK synth
         run: | 
-          cdk synth ${{ env.CDK_STACK_NAME }}
+          cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }}
 
       - name: AWS CDK diff
         run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=dev.${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
 
       - name: Add PR comment with diff result
         uses: actions/github-script@v6

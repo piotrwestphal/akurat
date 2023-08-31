@@ -37,9 +37,10 @@ new BaseStack(app, 'dev-AkuratStack', {
         distributionArtifactsS3KeyPrefix: 'distribution/dev',
         distributionParamsFilename: 'config.json',
         certificates: {
-            apiGwCertArn: 'arn:aws:acm:eu-central-1:412644677543:certificate/06027de2-867f-4b00-aad5-096ebe9bb567',
-            cloudFrontCertArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
+            apiGwCertArn: 'arn:aws:acm:eu-central-1:412644677543:certificate/45405177-308c-475d-8ecb-95283b330ef9',
+            cloudFrontCertArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
         },
+        domainPrefix: 'dev',
     },
 })
 

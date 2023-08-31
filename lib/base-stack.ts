@@ -53,8 +53,7 @@ export class BaseStack extends Stack {
             ...globalCommonLambdaProps,
         }
 
-        // domain.com || {envName}.domain.com
-        const domainName = this.node.tryGetContext('domainName') as string | undefined
+        const baseDomainName = this.node.tryGetContext('domainName') as string | undefined
 
         const webappBucket = new Bucket(this, 'WebappBucket', {
             publicReadAccess: false,
@@ -99,12 +98,17 @@ export class BaseStack extends Stack {
             logRetention,
         })
 
-        if (domainName && distribution) {
+        if (baseDomainName && distribution) {
             const {
                 certificates: {cloudFrontCertArn, apiGwCertArn},
                 distributionArtifactsS3KeyPrefix,
                 distributionParamsFilename,
+                domainPrefix,
             } = distribution
+            const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {domainName: baseDomainName})
+
+            const domainName = domainPrefix ? `${domainPrefix}.${baseDomainName}` : baseDomainName
+
             const webappDistribution = new Distribution(this, 'WebappDistribution', {
                 domainNames: [domainName],
                 certificate: Certificate.fromCertificateArn(this, 'CFCertificate', cloudFrontCertArn),
@@ -136,7 +140,12 @@ export class BaseStack extends Stack {
                 minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
                 httpVersion: HttpVersion.HTTP2,
             })
-            const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {domainName})
+
+            new ARecord(this, 'WebappRecordSet', {
+                recordName: domainName,
+                zone: hostedZone,
+                target: RecordTarget.fromAlias(new CloudFrontTarget(webappDistribution)),
+            })
 
             restApi.addDomainName('ApiGwDomainName', {
                 certificate: Certificate.fromCertificateArn(this, 'ApiGWCertificate', apiGwCertArn),
@@ -144,16 +153,9 @@ export class BaseStack extends Stack {
             })
 
             new ARecord(this, 'ApiRecordSet', {
-                recordName: `api`,
+                recordName: `api.${domainName}`,
                 zone: hostedZone,
                 target: RecordTarget.fromAlias(new ApiGateway(restApi)),
-            })
-
-            new ARecord(this, 'WebappRecordSet', {
-                zone: hostedZone,
-                target: RecordTarget.fromAlias(
-                    new CloudFrontTarget(webappDistribution),
-                ),
             })
 
             new BucketDeployment(this, 'WebappParamsDeployment', {

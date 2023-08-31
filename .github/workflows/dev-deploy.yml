@@ -43,11 +43,11 @@ jobs:
 
       - name: AWS CDK synth
         run: |
-          cdk synth ${{ env.CDK_STACK_NAME }}
+          cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }}
 
       - name: AWS CDK diff
         run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
 
       - name: Archive AWS CDK diff outputs
         uses: actions/upload-artifact@v3
@@ -57,7 +57,7 @@ jobs:
 
       - name: AWS CDK deploy
         run: |
-          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=dev.${{ secrets.DOMAIN_NAME }} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${{ secrets.DOMAIN_NAME }} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
 
       - name: Archive AWS CDK deployment outputs
         uses: actions/upload-artifact@v3

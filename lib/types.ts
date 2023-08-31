@@ -27,6 +27,7 @@ export type DistributionParams = Readonly<{
     distributionArtifactsS3KeyPrefix: string
     distributionParamsFilename: string
     certificates: Certificates
+    domainPrefix?: string
 }>
 
 export type UserMgmtParams = Readonly<{
