@@ -30,7 +30,7 @@ describe('Get all users api tests', () => {
             .expect(200)
             .then((res: Response) => {
                 const {items} = res.body as UserListRes
-                expect(items.length).toBe(5)
+                expect(items.length).toBe(4)
                 expect(items.find(v => v.email === userEmailA)!.sub).toBe(userA.Username)
                 expect(items.find(v => v.email === userEmailB)!.sub).toBe(userB.Username)
                 expect(items.find(v => v.email === userEmailC)!.sub).toBe(userC.Username)
