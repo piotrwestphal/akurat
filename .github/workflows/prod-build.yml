@@ -45,7 +45,7 @@ jobs:
 
       - name: AWS CDK synth
         run: |
-          cdk synth ${{ env.CDK_STACK_NAME }}
+          cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }} 
 
       - name: AWS CDK diff
         run: |

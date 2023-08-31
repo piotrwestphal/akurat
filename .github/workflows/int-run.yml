@@ -5,6 +5,8 @@ on:
     branches:
       - main
 
+concurrency: int-tests
+
 jobs:
   build:
     name: Deploy & Run Int Job

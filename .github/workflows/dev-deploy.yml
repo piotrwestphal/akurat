@@ -5,6 +5,8 @@ on:
     branches:
       - develop
 
+concurrency: dev-deploy
+
 jobs:
   build:
     name: Deploy Dev Job

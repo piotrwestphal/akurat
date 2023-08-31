@@ -5,6 +5,8 @@ on:
     branches:
       - main
 
+concurrency: prod-deploy
+
 jobs:
   build:
     name: Deploy Prod Job
@@ -43,11 +45,11 @@ jobs:
 
       - name: AWS CDK synth
         run: |
-          cdk synth ${{ env.CDK_STACK_NAME }}
+          cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }} 
 
       - name: AWS CDK diff
         run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
 
       - name: Archive AWS CDK diff outputs
         uses: actions/upload-artifact@v3
