@@ -53,3 +53,7 @@ jobs:
         with:
           name: cdk-deploy-outputs
           path: ${{ env.CDK_OUTPUTS_FILE }}
+
+      - name: Run integration tests
+        run: |
+          npm run test:int
