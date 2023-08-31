@@ -1,18 +1,17 @@
-name: Deploy Prod
+name: Deploy and run integration tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
 jobs:
   build:
-    name: Deploy Prod Job
+    name: Deploy & Run Int Job
     runs-on: ubuntu-latest
     env:
-      CDK_STACK_NAME: prod-AkuratStack
-      CDK_DIFF_OUT_FILE: diff.out
-      CDK_OUTPUTS_FILE: outputs.json
+      CDK_STACK_NAME: ${{ github.event.pull_request.number }}-AkuratStack
+      CDK_OUTPUTS_PATH: int/outputs.json
     steps:
       - uses: actions/checkout@v3
 
@@ -30,10 +29,6 @@ jobs:
         run: |
           npm test
 
-      - name: Install AWS CDK
-        run: |
-          npm install -g aws-cdk
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -43,21 +38,11 @@ jobs:
 
       - name: AWS CDK synth
         run: |
-          cdk synth ${{ env.CDK_STACK_NAME }}
-
-      - name: AWS CDK diff
-        run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
-
-      - name: Archive AWS CDK diff outputs
-        uses: actions/upload-artifact@v3
-        with:
-          name: cdk-diff-outputs
-          path: ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk synth int-${{ env.CDK_STACK_NAME }}
 
       - name: AWS CDK deploy
         run: |
-          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${{ secrets.DOMAIN_NAME }} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+          cdk deploy int-${{ env.CDK_STACK_NAME }} --require-approval never --ci --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
 
       - name: Archive AWS CDK deployment outputs
         uses: actions/upload-artifact@v3

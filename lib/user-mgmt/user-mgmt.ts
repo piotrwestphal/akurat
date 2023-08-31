@@ -29,6 +29,7 @@ export class UserMgmt extends Construct {
                     userMgmt: {
                         adminUsers,
                         autoConfirmedEmails,
+                        acceptedEmailDomains,
                     },
                     logRetention
                 }: UserMgmtProps) {
@@ -46,6 +47,7 @@ export class UserMgmt extends Construct {
             entry: join(__dirname, 'lambdas', 'pre-signup.ts'),
             environment: {
                 AUTO_CONFIRMED_EMAILS: autoConfirmedEmails.join(','),
+                ACCEPTED_EMAIL_DOMAINS: acceptedEmailDomains.join(',')
             },
             ...commonProps
         })

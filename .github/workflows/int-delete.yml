@@ -1,0 +1,37 @@
+name: Delete Int Stack
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  build:
+    name: Delete Int Stack Job
+    runs-on: ubuntu-latest
+    env:
+      CDK_STACK_NAME: ${{ github.event.pull_request.number }}-AkuratStack
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install AWS CDK
+        run: | 
+          npm install -g aws-cdk
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+          aws-region: eu-central-1
+
+      - name: Remove the CDK Int Stack for a given closed PR
+        run: |
+          aws cloudformation delete-stack --stack-name int-${CDK_STACK_NAME}

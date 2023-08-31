@@ -5,5 +5,5 @@ export const distributionDomainNameEnvKey = 'DistributionDomainName'
 
 export const testAcceptedEmailDomain = 'test.co'
 export const testAdminEmail = 'test@test.co'
-export const testAdminPassword = 'testTe$t'
-export const testAutoConfirmedEmail = 'leszek.miler@fake.com'
+export const testAdminPassword = 'testT3$t'
+export const testAutoConfirmedEmail = 'korwin.miler@fake.com'
