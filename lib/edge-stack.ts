@@ -27,7 +27,9 @@ export class EdgeStack extends Stack {
                     new ServicePrincipal('lambda.amazonaws.com'),
                     new ServicePrincipal('edgelambda.amazonaws.com'),
                 )
-            })
+            }),
+            // required for the Edge@Lambda
+            awsSdkConnectionReuse: false
         })
 
         new CfnOutput(this, 'EdgeFunctionVersionArn', {value: redirectEdgeFunc.currentVersion.functionArn})

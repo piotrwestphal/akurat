@@ -43,7 +43,7 @@ new BaseStack(app, 'dev-AkuratStack', {
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/dev',
         distributionParamsFilename: 'config.json',
-        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:3',
+        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
         domainPrefix: 'dev',
     },
@@ -72,7 +72,7 @@ new BaseStack(app, 'prod-AkuratStack', {
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/prod',
         distributionParamsFilename: 'config.json',
-        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:3',
+        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
     },
 })
