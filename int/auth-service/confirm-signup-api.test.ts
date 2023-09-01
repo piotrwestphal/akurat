@@ -20,7 +20,7 @@ describe('Confirm user signup api tests', () => {
 
         await registerUser(testCognitoUserPoolClientId, {email: confirmSignupReq.email, password: 'Password1'})
 
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .send(confirmSignupReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -38,7 +38,7 @@ describe('Confirm user signup api tests', () => {
             confirmationCode: '123',
         } satisfies ConfirmSignupReq
 
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .send(confirmSignupReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -56,7 +56,7 @@ describe('Confirm user signup api tests', () => {
         await deleteUser(testCognitoUserPoolId, confirmSignupReq.email)
 
         await registerUser(testCognitoUserPoolClientId, {email: confirmSignupReq.email, password: 'Password1'})
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .send(confirmSignupReq)
             .expect(400)
             .then((res: Response) => {
@@ -72,7 +72,7 @@ describe('Confirm user signup api tests', () => {
             email: 'Lech.Walesa.com',
             confirmationCode: '123',
         }
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .send(confirmSignupReq)
             .expect(400)
             .then((res: Response) => {
@@ -85,7 +85,7 @@ describe('Confirm user signup api tests', () => {
             email: `Adrian@Mentzen.com`,
         } as ConfirmSignupReq
 
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .expect(400)
             .send(confirmSignupReq)
             .then((res: Response) => {
@@ -100,7 +100,7 @@ describe('Confirm user signup api tests', () => {
             hack: 'let me in'
         } as ConfirmSignupReq
 
-        await req.post('api/v1auth/confirm-signup')
+        await req.post('api/v1/auth/confirm-signup')
             .expect(400)
             .send(confirmSignupReq)
             .then((res: Response) => {

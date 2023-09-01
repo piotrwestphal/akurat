@@ -9,7 +9,7 @@ describe('User logout api tests', () => {
 
     test('GET "/auth/logout" should log out current user', async () => {
 
-        await req.get('api/v1auth/logout')
+        await req.get('api/v1/auth/logout')
             .expect('Content-Type', /json/)
             .expect(200)
             .then((res: Response) => {

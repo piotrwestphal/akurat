@@ -24,7 +24,7 @@ describe('Get all users api tests', () => {
         const userB = await createUser(testCognitoUserPoolId, userEmailB)
         const userC = await createUser(testCognitoUserPoolId, userEmailC)
 
-        await req.get(`api/v1users`)
+        await req.get(`api/v1/users`)
             .set(authorizationHeaderKey, defaultUserToken)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -44,7 +44,7 @@ describe('Get all users api tests', () => {
     })
 
     test('GET "/users" unauthorized', async () => {
-        await req.get(`api/v1users`)
+        await req.get(`api/v1/users`)
             .expect(401)
             .then((res: Response) => {
                 expect(res.text).toMatch(/Unauthorized/)
@@ -52,7 +52,7 @@ describe('Get all users api tests', () => {
     })
 
     test('GET "/users/{id}" forbidden', async () => {
-        await req.get(`api/v1users`)
+        await req.get(`api/v1/users`)
             .set(authorizationHeaderKey, 'mock')
             .expect(401)
             // TODO
