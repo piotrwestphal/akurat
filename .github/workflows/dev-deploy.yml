@@ -5,6 +5,8 @@ on:
     branches:
       - develop
 
+concurrency: dev-deploy
+
 jobs:
   build:
     name: Deploy Dev Job
@@ -30,6 +32,10 @@ jobs:
         run: |
           npm test
 
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -37,21 +43,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
           aws-region: eu-central-1
 
-      - name: Copy stack cfn parameters from S3 bucket and set as cdk context
-        run: |
-          aws s3 cp s3://akurat-artifacts/distribution/dev/config.json cdk.context.json
-
-      - name: Install AWS CDK
-        run: |
-          npm install -g aws-cdk
-
       - name: AWS CDK synth
         run: |
-          cdk synth ${{ env.CDK_STACK_NAME }}
+          cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }}
 
       - name: AWS CDK diff
         run: |
-          cdk diff ${{ env.CDK_STACK_NAME }} --ci >> ${{ env.CDK_DIFF_OUT_FILE }}
+          cdk diff ${{ env.CDK_STACK_NAME }} --ci --context domainName=${{ secrets.DOMAIN_NAME }} >> ${{ env.CDK_DIFF_OUT_FILE }}
 
       - name: Archive AWS CDK diff outputs
         uses: actions/upload-artifact@v3
@@ -61,7 +59,7 @@ jobs:
 
       - name: AWS CDK deploy
         run: |
-          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+          cdk deploy ${{ env.CDK_STACK_NAME }} --require-approval never --ci --context domainName=${{ secrets.DOMAIN_NAME }} --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
 
       - name: Archive AWS CDK deployment outputs
         uses: actions/upload-artifact@v3

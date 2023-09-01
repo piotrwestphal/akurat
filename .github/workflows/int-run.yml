@@ -1,0 +1,61 @@
+name: Deploy and run integration tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency: int-tests
+
+jobs:
+  build:
+    name: Deploy & Run Int Job
+    runs-on: ubuntu-latest
+    env:
+      CDK_STACK_NAME: ${{ github.event.pull_request.number }}-AkuratStack
+      CDK_OUTPUTS_FILE: int/outputs.json
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Unit tests
+        run: |
+          npm test
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEPLOY_SECRET_KEY }}
+          aws-region: eu-central-1
+
+      - name: Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+
+      - name: AWS CDK synth
+        run: |
+          cdk synth int-${{ env.CDK_STACK_NAME }}
+
+      - name: AWS CDK deploy
+        run: |
+          cdk deploy int-${{ env.CDK_STACK_NAME }} --require-approval never --ci --outputs-file ${{ env.CDK_OUTPUTS_FILE }}
+
+      - name: Archive AWS CDK deployment outputs
+        uses: actions/upload-artifact@v3
+        with:
+          name: cdk-deploy-outputs
+          path: ${{ env.CDK_OUTPUTS_FILE }}
+
+      - name: Run integration tests
+        run: |
+          npm run test:int

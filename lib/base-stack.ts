@@ -1,38 +1,22 @@
-import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
-import {Construct} from 'constructs'
-import {Certificate} from 'aws-cdk-lib/aws-certificatemanager'
-import {ARecord, HostedZone, RecordTarget} from 'aws-cdk-lib/aws-route53'
-import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {CfnOutput, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
+import {ResponseType, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
-import {LambdaIntegration, RestApi} from 'aws-cdk-lib/aws-apigateway'
-import {
-    AllowedMethods,
-    CachedMethods,
-    CachePolicy,
-    Distribution,
-    DistributionProps,
-    HttpVersion,
-    OriginAccessIdentity,
-    PriceClass,
-    SecurityPolicyProtocol,
-    ViewerProtocolPolicy
-} from 'aws-cdk-lib/aws-cloudfront'
-import {ApiGateway, CloudFrontTarget} from 'aws-cdk-lib/aws-route53-targets'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
-import {S3Origin} from 'aws-cdk-lib/aws-cloudfront-origins'
-import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
-import {WebappDistributionParams} from './types'
+import {Construct} from 'constructs'
+import {AuthService} from './auth-service/auth-service'
 import {globalCommonLambdaProps} from './cdk.consts'
-import {join} from 'path'
+import {Cdn} from './cdn/cdn'
+import {restApiEndpointOutputKey, userPoolClientIdOutputKey, userPoolIdOutputKey} from './consts'
+import {DistributionParams, UserMgmtParams} from './types'
+import {UserMgmt} from './user-mgmt/user-mgmt'
 
 type BaseStackProps = Readonly<{
     envName: string
     artifactsBucketName: string
-    // TODO: is it all right to have two separate certs?
-    certificateArns?: {
-        apiGw: string
-        cloudFront: string
-    }
+    userMgmt: UserMgmtParams
+    logRetention: RetentionDays
+    distribution?: DistributionParams
 }> & StackProps
 
 // TODO: https://stackoverflow.com/questions/71543415/how-to-change-the-url-prefix-for-fetch-calls-depending-on-dev-vs-prod-environmen
@@ -41,17 +25,19 @@ export class BaseStack extends Stack {
                 id: string, {
                     envName,
                     artifactsBucketName,
-                    certificateArns,
+                    userMgmt,
+                    logRetention,
+                    distribution,
                     ...props
                 }: BaseStackProps) {
         super(scope, id, props)
 
         const commonLambdaProps: Partial<NodejsFunctionProps> = {
             logRetention: RetentionDays.ONE_WEEK,
-            ...globalCommonLambdaProps
+            ...globalCommonLambdaProps,
         }
 
-        const domainName = this.node.tryGetContext('domainName') as string | undefined
+        const baseDomainName = this.node.tryGetContext('domainName') as string | undefined
 
         const webappBucket = new Bucket(this, 'WebappBucket', {
             publicReadAccess: false,
@@ -61,99 +47,50 @@ export class BaseStack extends Stack {
             autoDeleteObjects: true,
         })
 
-        const originAccessIdentity = new OriginAccessIdentity(this, 'CloudFrontOriginAccessIdentity')
-        const webappBucketOrigin = new S3Origin(webappBucket, {originAccessIdentity})
-
         const restApi = new RestApi(this, 'RestApi', {
-            description: 'Rest api for application',
+            description: `[${envName}] REST api for application`,
             cloudWatchRole: true,
             deployOptions: {
-                stageName: envName
+                stageName: envName,
+            },
+        })
+        // adds extended request body validation messages
+        restApi.addGatewayResponse('BadRequestBodyValidationTemplate', {
+            type: ResponseType.BAD_REQUEST_BODY,
+            statusCode: '400',
+            templates: {
+                'application/json': `{"message": "$context.error.validationErrorString"}`,
             },
         })
 
-        const distributionProps: DistributionProps = {
-            defaultRootObject: 'index.html',
-            defaultBehavior: {
-                origin: webappBucketOrigin,
-                compress: true,
-                allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-                cachedMethods: CachedMethods.CACHE_GET_HEAD,
-                viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                cachePolicy: CachePolicy.CACHING_OPTIMIZED,
-            },
-            errorResponses: [
-                {
-                    httpStatus: 403,
-                    responsePagePath: '/index.html',
-                    responseHttpStatus: 200,
-                    ttl: Duration.minutes(0),
-                },
-                {
-                    httpStatus: 404,
-                    responsePagePath: '/index.html',
-                    responseHttpStatus: 200,
-                    ttl: Duration.minutes(0),
-                },
-            ],
-            priceClass: PriceClass.PRICE_CLASS_100,
-            enabled: true,
-            minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-            httpVersion: HttpVersion.HTTP2,
-        }
+        const restApiV1Resource = restApi.root.addResource('api').addResource('v1')
 
-        let webappDistribution: Distribution
-
-        if (certificateArns && domainName) {
-            webappDistribution = new Distribution(this, 'WebappDistribution', {
-                domainNames: [domainName],
-                certificate: Certificate.fromCertificateArn(this, 'CFCertificate', certificateArns.cloudFront),
-                ...distributionProps
-            })
-            const hostedZone = HostedZone.fromLookup(this, 'HostedZone', {domainName})
-
-            restApi.addDomainName('ApiGwDomainName', {
-                certificate: Certificate.fromCertificateArn(this, 'ApiGWCertificate', certificateArns.apiGw),
-                domainName: `api.${domainName}`
-            })
-
-            new ARecord(this, 'ApiRecordSet', {
-                recordName: `api`,
-                zone: hostedZone,
-                target: RecordTarget.fromAlias(new ApiGateway(restApi)),
-            })
-
-            new ARecord(this, 'WebappRecordSet', {
-                zone: hostedZone,
-                target: RecordTarget.fromAlias(
-                    new CloudFrontTarget(webappDistribution)
-                ),
-            })
-        } else {
-            webappDistribution = new Distribution(this, 'WebappDistribution', distributionProps)
-            new CfnOutput(this, 'DistributionDomainName', {value: webappDistribution.domainName})
-        }
-
-        new BucketDeployment(this, 'WebappParamsDeployment', {
-            destinationBucket: Bucket.fromBucketName(this, 'ArtifactsBucket', artifactsBucketName),
-            destinationKeyPrefix: `distribution/${envName}`,
-            sources: [Source.jsonData('config.json',
-                {
-                    webappBucketName: webappBucket.bucketName,
-                    webappDistribution: {
-                        domainName: webappDistribution.domainName,
-                        distributionId: webappDistribution.distributionId,
-                    },
-                } satisfies WebappDistributionParams)],
+        const {authorizer, userPool} = new UserMgmt(this, 'UserMgmt', {
+            envName,
+            restApiV1Resource,
+            userMgmt,
+            logRetention,
         })
 
-        const tempFunc = new NodejsFunction(this, 'TempFunction', {
-            entry: join(__dirname, 'lambdas', 'hello.ts'),
-            ...commonLambdaProps
+        const {userPoolClientId} = new AuthService(this, 'AuthService', {
+            restApi,
+            restApiV1Resource,
+            userPool,
+            logRetention,
         })
 
-        restApi.root
-            .addResource('hello')
-            .addMethod('GET', new LambdaIntegration(tempFunc))
+        if (baseDomainName && distribution) {
+            new Cdn(this, 'Cdn', {
+                baseDomainName,
+                artifactsBucketName,
+                webappBucket,
+                restApi,
+                distribution,
+            })
+        }
+
+        new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
+        new CfnOutput(this, userPoolClientIdOutputKey, {value: userPoolClientId})
+        new CfnOutput(this, userPoolIdOutputKey, {value: userPool.userPoolId})
     }
 }
