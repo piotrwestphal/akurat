@@ -18,12 +18,12 @@ describe('Confirm forgot password api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
 
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({email: signUpReq.email} satisfies ForgotPasswordReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -34,7 +34,7 @@ describe('Confirm forgot password api tests', () => {
             confirmationCode: '123',
         } satisfies ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -55,7 +55,7 @@ describe('Confirm forgot password api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -66,7 +66,7 @@ describe('Confirm forgot password api tests', () => {
             confirmationCode: '123',
         } satisfies ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -87,7 +87,7 @@ describe('Confirm forgot password api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -98,7 +98,7 @@ describe('Confirm forgot password api tests', () => {
             confirmationCode: '123',
         } satisfies ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -117,7 +117,7 @@ describe('Confirm forgot password api tests', () => {
             confirmationCode: '123',
         } satisfies ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -132,7 +132,7 @@ describe('Confirm forgot password api tests', () => {
             password: 'NewPassword',
         } as ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -149,7 +149,7 @@ describe('Confirm forgot password api tests', () => {
             extra: 'field'
         } as ConfirmForgotPasswordReq
 
-        await req.post('v1/auth/confirm-forgot')
+        await req.post('api/v1auth/confirm-forgot')
             .send(confirmForgotReq)
             .expect('Content-Type', /json/)
             .expect(400)

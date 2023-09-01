@@ -16,7 +16,7 @@ describe('Refresh token api tests', () => {
         } satisfies AuthReq
 
         const {RefreshToken} = await authorize(testCognitoUserPoolClientId, loginReq)
-        await req.get('v1/auth/refresh')
+        await req.get('api/v1auth/refresh')
             .set('Cookie', `token=${RefreshToken}`)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -29,7 +29,7 @@ describe('Refresh token api tests', () => {
     })
 
     test('GET "/auth/refresh" should not accept if invalid token', async () => {
-        await req.get('v1/auth/refresh')
+        await req.get('api/v1auth/refresh')
             .set('Cookie', `token=abc`)
             .expect('Content-Type', /json/)
             .expect(401)

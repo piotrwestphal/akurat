@@ -22,7 +22,7 @@ describe('Get a user api tests', () => {
         const user = await createUser(testCognitoUserPoolId, userEmail)
         const userSub = user.Username
 
-        await req.get(`v1/users/${userSub}`)
+        await req.get(`api/v1users/${userSub}`)
             .set(authorizationHeaderKey, defaultUserToken)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -43,14 +43,14 @@ describe('Get a user api tests', () => {
     })
 
     test('GET "/users/{id}" should not fetch a user with non-existing id', async () => {
-        await req.get(`v1/users/${randomUUID()}`)
+        await req.get(`api/v1users/${randomUUID()}`)
             .set(authorizationHeaderKey, defaultUserToken)
             .expect('Content-Type', /json/)
             .expect(404)
     })
 
     test('GET "/users/{id}" unauthorized', async () => {
-        await req.get(`v1/users/${randomUUID()}`)
+        await req.get(`api/v1users/${randomUUID()}`)
             .expect(401)
             .then((res: Response) => {
                 expect(res.text).toMatch(/Unauthorized/)
@@ -58,7 +58,7 @@ describe('Get a user api tests', () => {
     })
 
     test('GET "/users/{id}" forbidden', async () => {
-        await req.get(`v1/users/${randomUUID()}`)
+        await req.get(`api/v1users/${randomUUID()}`)
             .set(authorizationHeaderKey, 'mock')
             .expect(401)
             // TODO

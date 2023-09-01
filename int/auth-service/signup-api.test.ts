@@ -18,7 +18,7 @@ describe('Signup user api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -42,7 +42,7 @@ describe('Signup user api tests', () => {
         await deleteUser(testCognitoUserPoolId, signupReq.email)
 
         await createUser(testCognitoUserPoolId, signupReq.email)
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signupReq)
             .expect(400)
             .then((res: Response) => {
@@ -58,7 +58,7 @@ describe('Signup user api tests', () => {
             email: 'Lech@Walesa.com',
             password: 'Passw0$rd',
         }
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -71,7 +71,7 @@ describe('Signup user api tests', () => {
             email: `Lech@${testAcceptedEmailDomain}`,
             password: 'Wałęsa',
         }
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -84,7 +84,7 @@ describe('Signup user api tests', () => {
             email: 'Lech.Walesa.com',
             password: 'Wałęsa',
         }
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -97,7 +97,7 @@ describe('Signup user api tests', () => {
             email: `Lech@${testAcceptedEmailDomain}`,
         } as AuthReq
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .expect(400)
             .send(loginReq)
             .then((res: Response) => {
@@ -112,7 +112,7 @@ describe('Signup user api tests', () => {
             hack: 'let me in'
         } as AuthReq
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .expect(400)
             .send(loginReq)
             .then((res: Response) => {

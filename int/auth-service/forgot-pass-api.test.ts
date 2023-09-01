@@ -18,12 +18,12 @@ describe('Forgot password api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
 
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({email: signUpReq.email} satisfies ForgotPasswordReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -46,12 +46,12 @@ describe('Forgot password api tests', () => {
         // Clean up
         await deleteUser(testCognitoUserPoolId, signUpReq.email)
 
-        await req.post('v1/auth/signup')
+        await req.post('api/v1auth/signup')
             .send(signUpReq)
             .expect('Content-Type', /json/)
             .expect(200)
 
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({email: signUpReq.email} satisfies ForgotPasswordReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -64,7 +64,7 @@ describe('Forgot password api tests', () => {
     })
 
     test('POST "/auth/forgot" should not accept if user not found', async () => {
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({email: `nonexistinguser@${testAcceptedEmailDomain}`} satisfies ForgotPasswordReq)
             .expect('Content-Type', /json/)
             .expect(400)
@@ -74,7 +74,7 @@ describe('Forgot password api tests', () => {
     })
 
     test('POST "/auth/forgot" should not accept because of the missing field', async () => {
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({})
             .expect('Content-Type', /json/)
             .expect(400)
@@ -84,7 +84,7 @@ describe('Forgot password api tests', () => {
     })
 
     test('POST "/auth/forgot" should not accept because of the extra field', async () => {
-        await req.post('v1/auth/forgot')
+        await req.post('api/v1auth/forgot')
             .send({email: `someuser@${testAcceptedEmailDomain}`, extra: 'value'} as ForgotPasswordReq)
             .expect('Content-Type', /json/)
             .expect(400)

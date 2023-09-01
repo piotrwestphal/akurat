@@ -20,7 +20,7 @@ describe('User login api tests', () => {
             password: testAdminPassword,
         } satisfies AuthReq
 
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .send(loginReq)
             .expect('Content-Type', /json/)
             .expect(200)
@@ -50,7 +50,7 @@ describe('User login api tests', () => {
         await deleteUser(testCognitoUserPoolId, loginReq.email)
 
         await registerUser(testCognitoUserPoolClientId, loginReq)
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .send(loginReq)
             .expect(409)
             .then((res: Response) => {
@@ -66,7 +66,7 @@ describe('User login api tests', () => {
             email: 'Milka@Walesa.com',
             password: 'Passw0$rd',
         }
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -79,7 +79,7 @@ describe('User login api tests', () => {
             email: 'Lech.Walesa.com',
             password: 'Wałęsa',
         }
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -92,7 +92,7 @@ describe('User login api tests', () => {
             email: testAdminEmail,
             password: `${testAdminPassword}!!`,
         }
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .send(loginReq)
             .expect(400)
             .then((res: Response) => {
@@ -105,7 +105,7 @@ describe('User login api tests', () => {
             email: 'Lech',
         } as AuthReq
 
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .expect(400)
             .send(loginReq)
             .then((res: Response) => {
@@ -120,7 +120,7 @@ describe('User login api tests', () => {
             hack: 'let me in'
         } as AuthReq
 
-        await req.post('v1/auth/login')
+        await req.post('api/v1auth/login')
             .expect(400)
             .send(loginReq)
             .then((res: Response) => {
