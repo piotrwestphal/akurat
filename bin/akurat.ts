@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BaseStack} from '../lib/base-stack'
 import {testAcceptedEmailDomain, testAdminEmail, testAdminPassword, testAutoConfirmedEmail} from '../lib/consts'
+import {EdgeStack} from '../lib/edge-stack'
 import {RootStack} from '../lib/root-stack'
 
 // when triggered on the GH actions it gives a unique name for the current PR
@@ -14,6 +15,12 @@ const app = new cdk.App()
 new RootStack(app, 'AkuratRootStack', {
     description: 'Root infrastructure for the Akurat App',
     env: {account: '412644677543', region: 'eu-central-1'},
+    artifactsBucketName: 'akurat-artifacts',
+})
+
+new EdgeStack(app, 'AkuratEdgeStack', {
+    description: 'Edge infrastructure for the Akurat App',
+    env: {account: '412644677543', region: 'us-east-1'},
     artifactsBucketName: 'akurat-artifacts',
 })
 
@@ -30,16 +37,14 @@ new BaseStack(app, 'dev-AkuratStack', {
             },
         ],
         autoConfirmedEmails: [],
-        acceptedEmailDomains: [],
+        acceptedEmailDomains: ['gmail.com'],
     },
     logRetention: RetentionDays.ONE_WEEK,
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/dev',
         distributionParamsFilename: 'config.json',
-        certificates: {
-            apiGwCertArn: 'arn:aws:acm:eu-central-1:412644677543:certificate/45405177-308c-475d-8ecb-95283b330ef9',
-            cloudFrontCertArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
-        },
+        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:3',
+        certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
         domainPrefix: 'dev',
     },
 })
@@ -67,9 +72,7 @@ new BaseStack(app, 'prod-AkuratStack', {
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/prod',
         distributionParamsFilename: 'config.json',
-        certificates: {
-            apiGwCertArn: 'arn:aws:acm:eu-central-1:412644677543:certificate/06027de2-867f-4b00-aad5-096ebe9bb567',
-            cloudFrontCertArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
-        },
+        edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:3',
+        certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
     },
 })

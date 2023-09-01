@@ -18,15 +18,11 @@ export type UserParams = Readonly<{
     password: string
 }>
 
-export type Certificates = Readonly<{
-    apiGwCertArn: string
-    cloudFrontCertArn: string
-}>
-
 export type DistributionParams = Readonly<{
     distributionArtifactsS3KeyPrefix: string
     distributionParamsFilename: string
-    certificates: Certificates
+    edgeLambdaVerArn: string
+    certArn: string
     domainPrefix?: string
 }>
 
