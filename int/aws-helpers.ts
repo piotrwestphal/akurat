@@ -3,38 +3,52 @@ import {
     AdminDeleteUserCommand,
     AuthenticationResultType,
     AuthFlowType,
-    CognitoIdentityProviderClient,
+    CognitoIdentityProviderClient, GetUserCommand,
     InitiateAuthCommand,
     MessageActionType,
     SignUpCommand,
-    UserType
+    UserType,
 } from '@aws-sdk/client-cognito-identity-provider'
+import {BatchWriteItemCommand, DynamoDBClient, PutItemCommand, ScanCommand} from '@aws-sdk/client-dynamodb'
+import {marshall, unmarshall} from '@aws-sdk/util-dynamodb'
 import {UserParams} from '../lib/types'
+import {splitIntoChunks} from '../lib/utils'
+
+const dynamoDbClient = new DynamoDBClient({region: 'eu-central-1'})
+
 
 const cognitoClient = new CognitoIdentityProviderClient({region: 'eu-central-1'})
 
-const retryUntilConditionMet = async <T = any>(action: () => Promise<T>,
-                                               condition: (v: T) => boolean,
-                                               retryInterval = 500,
-                                               maxAttemptCount = 10): Promise<T | null> => {
-    let lastResult = null
-    for (let attempted = 0; attempted < maxAttemptCount; attempted++) {
-        if (attempted > 0) {
-            await sleep(retryInterval)
-        }
-        const result = await action()
-        if (condition(result)) {
-            console.debug(`Condition met after [${attempted}] retry attempts at [${retryInterval}] ms intervals`)
-            return result
-        }
-        lastResult = result
-    }
-    console.log(`Condition not met after [${maxAttemptCount}] retry attempts at [${retryInterval}] ms intervals. ` +
-        `Result of Last invoked action: `, lastResult)
-    return lastResult as T | null
-}
+export const putItemIntoTable = <T extends Record<string, any>>(TableName: string,
+                                                                Item: T) =>
+    dynamoDbClient.send(new PutItemCommand({TableName, Item: marshall(Item)}))
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+export const deleteAllItemsFromTable = async (TableName: string, [pk, sk]: [pk: string, sk: string]) => {
+    const scanCmd = new ScanCommand({TableName})
+    const scanResult = await dynamoDbClient.send(scanCmd)
+    if (scanResult.Items?.length) {
+        const keys = scanResult.Items.map(v => unmarshall(v)).map(v => [v[pk], v[sk]])
+        console.log(`Found [${scanResult.Items.length}] items with keys [${pk},${sk}]: ${keys.join('; ')}`)
+        const deleteRequests = keys.map(([pkValue, skValue]) => ({
+            DeleteRequest: {
+                Key: marshall({
+                    [pk]: pkValue,
+                    [sk]: skValue,
+                }),
+            },
+        }))
+        const deleteRequestsInChunks = splitIntoChunks(deleteRequests, 25)
+        const pendingDeleteRequests = deleteRequestsInChunks.map(chunk =>
+            dynamoDbClient.send(new BatchWriteItemCommand({RequestItems: {[TableName]: chunk}})))
+        for await (const chunk of pendingDeleteRequests) {
+            await chunk
+        }
+        console.log(`Deleted [${scanResult.Items.length}] items from table [${TableName}]`)
+    } else {
+        console.log('No items to delete')
+    }
+}
 
 export const authorize = async (userPoolClientId: string,
                                 {email, password}: UserParams): Promise<AuthenticationResultType> => {
@@ -44,11 +58,15 @@ export const authorize = async (userPoolClientId: string,
         AuthParameters: {
             USERNAME: email,
             PASSWORD: password,
-        }
+        },
     }))
     return authResult.AuthenticationResult!
 }
 
+export const getUser = async (accessToken: string) =>
+    cognitoClient.send(new GetUserCommand({
+        AccessToken: accessToken
+    }))
 export const registerUser = async (userPoolClientId: string,
                                    {email, password}: UserParams) =>
     cognitoClient.send(new SignUpCommand({

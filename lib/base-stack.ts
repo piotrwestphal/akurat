@@ -1,14 +1,22 @@
 import {CfnOutput, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
 import {ResponseType, RestApi} from 'aws-cdk-lib/aws-apigateway'
-import {NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {AttributeType, BillingMode, Table} from 'aws-cdk-lib/aws-dynamodb'
+import {Code, LayerVersion, Runtime} from 'aws-cdk-lib/aws-lambda'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {Construct} from 'constructs'
+import {join} from 'path'
 import {AuthService} from './auth-service/auth-service'
-import {globalCommonLambdaProps} from './cdk.consts'
 import {Cdn} from './cdn/cdn'
-import {restApiEndpointOutputKey, userPoolClientIdOutputKey, userPoolIdOutputKey} from './consts'
-import {DistributionParams, UserMgmtParams} from './types'
+import {
+    MainTable,
+    mainTableNameOutputKey,
+    restApiEndpointOutputKey,
+    userPoolClientIdOutputKey,
+    userPoolIdOutputKey,
+} from './consts'
+import {ProfilesMgmt} from './profiles/profiles-mgmt'
+import {DistributionParams, LambdaLayerDef, UserMgmtParams} from './types'
 import {UserMgmt} from './user-mgmt/user-mgmt'
 
 type BaseStackProps = Readonly<{
@@ -32,10 +40,16 @@ export class BaseStack extends Stack {
                 }: BaseStackProps) {
         super(scope, id, props)
 
-        const commonLambdaProps: Partial<NodejsFunctionProps> = {
-            logRetention: RetentionDays.ONE_WEEK,
-            ...globalCommonLambdaProps,
-        }
+        const jwtVerifierLayer = {
+            layerVer: new LayerVersion(this, 'JwtVerifier', {
+                layerVersionName: `${this.stackName}JwtVerifier`,
+                description: 'JWT Verifier',
+                compatibleRuntimes: [Runtime.NODEJS_18_X],
+                code: Code.fromAsset(join('layers', 'jwt-verifier')),
+                removalPolicy: RemovalPolicy.DESTROY,
+            }),
+            moduleName: 'jwt-verifier',
+        } satisfies LambdaLayerDef
 
         const baseDomainName = this.node.tryGetContext('domainName') as string | undefined
 
@@ -45,6 +59,21 @@ export class BaseStack extends Stack {
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
             removalPolicy: RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
+        })
+
+        const mainTable = new Table(this, 'MainTable', {
+            partitionKey: {
+                name: MainTable.PK,
+                type: AttributeType.STRING,
+            },
+            sortKey: {
+                name: MainTable.SK,
+                type: AttributeType.STRING,
+            },
+            readCapacity: 5,
+            writeCapacity: 5,
+            billingMode: BillingMode.PROVISIONED,
+            removalPolicy: RemovalPolicy.DESTROY,
         })
 
         const restApi = new RestApi(this, 'RestApi', {
@@ -89,6 +118,17 @@ export class BaseStack extends Stack {
             })
         }
 
+        new ProfilesMgmt(this, 'ProfilesMgmt', {
+            mainTable,
+            userPoolId: userPool.userPoolId,
+            userPoolClientId,
+            restApiV1Resource,
+            jwtVerifierLayer,
+            authorizer,
+            logRetention,
+        })
+
+        new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
         new CfnOutput(this, userPoolClientIdOutputKey, {value: userPoolClientId})
         new CfnOutput(this, userPoolIdOutputKey, {value: userPool.userPoolId})

@@ -10,18 +10,22 @@ console.log('Outputs json: ', outputsJson)
 const cdkStackName = Object.keys(outputsJson)[0]
 
 const {
+    MainTableName,
     RestApiEndpoint,
     UserPoolClientId,
     UserPoolId,
 } = outputsJson[cdkStackName] as CdkOutputs
 
+export const testMainTableName = MainTableName
 export const testRestApiEndpoint = RestApiEndpoint
 export const testCognitoUserPoolId = UserPoolId
 export const testCognitoUserPoolClientId = UserPoolClientId
 
 export let defaultUserToken = ''
+export let defaultAccessToken = ''
 
 beforeAll(async () => {
-    const {IdToken} = await authorize(testCognitoUserPoolClientId, {email: testAdminEmail, password: testAdminPassword})
+    const {IdToken, AccessToken} = await authorize(testCognitoUserPoolClientId, {email: testAdminEmail, password: testAdminPassword})
     defaultUserToken = IdToken!
+    defaultAccessToken = AccessToken!
 })
