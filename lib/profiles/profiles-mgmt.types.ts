@@ -11,4 +11,5 @@ export type ProfileCreateRequest = ProfileBaseReq
 export type ProfileUpdateRequest = ProfileBaseReq
 export type ProfileResponse = Readonly<{
     id: string
+    email: string
 }> & ProfileBaseReq & TimeStamps

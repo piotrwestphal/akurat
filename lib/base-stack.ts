@@ -120,6 +120,7 @@ export class BaseStack extends Stack {
 
         new ProfilesMgmt(this, 'ProfilesMgmt', {
             mainTable,
+            restApi,
             userPoolId: userPool.userPoolId,
             userPoolClientId,
             restApiV1Resource,
