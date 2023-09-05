@@ -13,3 +13,8 @@ export type ProfileResponse = Readonly<{
     id: string
     email: string
 }> & ProfileBaseReq & TimeStamps
+
+export type ProfilesResponse = Readonly<{
+    items: ProfileResponse[]
+    next?: string
+}>

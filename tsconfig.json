@@ -28,9 +28,6 @@
       "@lambda-types": [
         "lib/lambda.types"
       ],
-      "jwt-verifier": [
-        "layers/jwt-verifier/nodejs/node_modules/jwt-verifier"
-      ]
     }
   },
   "exclude": [

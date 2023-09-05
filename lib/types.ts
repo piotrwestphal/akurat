@@ -1,12 +1,9 @@
-import {ILayerVersion} from 'aws-cdk-lib/aws-lambda'
 import {
     distributionDomainNameEnvKey, mainTableNameOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
     userPoolIdOutputKey,
 } from './consts'
-
-export type LambdaLayerDef = { layerVer: ILayerVersion, moduleName: string }
 
 export type WebappDistributionParams = Readonly<{
     webappBucketName: string

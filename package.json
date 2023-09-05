@@ -5,9 +5,6 @@
     "akurat": "bin/akurat.js"
   },
   "scripts": {
-    "install_jwt_verifier_layer": "cd layers/jwt-verifier/nodejs/node_modules/jwt-verifier && npm install",
-    "install_lambda_layers": "npm run install_jwt_verifier_layer",
-    "postinstall": "(npm run install_lambda_layers);",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest --testPathPattern=test/",
@@ -23,11 +20,11 @@
     "@aws-sdk/client-cognito-identity-provider": "3.405.0",
     "@aws-sdk/client-dynamodb": "3.405.0",
     "@aws-sdk/util-dynamodb": "3.405.0",
-    "aws-jwt-verify": "4.0.0",
     "@types/jest": "29.5.4",
     "@types/node": "18.17.12",
     "@types/supertest": "2.0.12",
     "aws-sdk": "2.1447.0",
+    "@faker-js/faker": "8.0.2",
     "jest": "29.6.4",
     "supertest": "6.3.3",
     "ts-jest": "29.1.1",

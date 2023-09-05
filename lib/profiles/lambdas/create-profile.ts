@@ -1,32 +1,26 @@
 import {DynamoDBClient, DynamoDBServiceException, PutItemCommand} from '@aws-sdk/client-dynamodb'
 import {marshall} from '@aws-sdk/util-dynamodb'
 import {ApiGatewayEvent, ApiGatewayLambdaResponse} from '@lambda-types'
-import {JwtVerifier} from 'jwt-verifier'
 import {trimPath} from '../../utils'
 import {ProfileCreateRequest} from '../profiles-mgmt.types'
 import {toProfileEntity, toProfileResponse} from './profile.mapper'
 
-const clientId = process.env.USER_POOL_CLIENT_ID as string
-const userPoolId = process.env.USER_POOL_ID as string
 const tableName = process.env.TABLE_NAME as string
 const awsRegion = process.env.AWS_REGION as string
 
 const dynamoClient = new DynamoDBClient({region: awsRegion})
-
-const verifier = new JwtVerifier({
-    userPoolId,
-    clientId,
-})
 export const handler = async ({
+                                  body,
                                   requestContext: {
                                       path,
+                                      authorizer: {
+                                          claims
+                                      }
                                   },
-                                  body,
-                                  headers: {Authorization},
                               }: ApiGatewayEvent): Promise<ApiGatewayLambdaResponse> => {
     const createRequest = JSON.parse(body) as ProfileCreateRequest
     try {
-        const {sub, email} = await verifier.verify(Authorization)
+        const {sub, email} = claims
         const itemToCreate = toProfileEntity({...createRequest, sub, email})
 
         console.log(`Creating profile for an email address [${email}]`)
@@ -44,7 +38,7 @@ export const handler = async ({
             },
         }
     } catch (err) {
-        console.error(`Error during creating a profile for a current user`, JSON.stringify(err, null, 2))
+        console.error(`Error during creating a profile for an email address [${claims.email}]`, JSON.stringify(err, null, 2))
         const {name, message} = err as DynamoDBServiceException
         return {
             statusCode: 500,
