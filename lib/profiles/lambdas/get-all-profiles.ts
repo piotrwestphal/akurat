@@ -3,6 +3,7 @@ import {marshall, unmarshall} from '@aws-sdk/util-dynamodb'
 import {ApiGatewayEvent, ApiGatewayLambdaResponse} from '@lambda-types'
 import {MainPkValue, MainTable} from '../../consts'
 import {ProfileEntity} from '../../entity.types'
+import {ProfilesResponse} from '../profiles-mgmt.types'
 import {toProfileResponse} from './profile.mapper'
 
 const tableName = process.env.TABLE_NAME as string
@@ -30,7 +31,7 @@ export const handler = async (_: ApiGatewayEvent): Promise<ApiGatewayLambdaRespo
                 next: result.LastEvaluatedKey
                     ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
                     : undefined,
-            }),
+            } satisfies ProfilesResponse),
         }
     } catch (err) {
         console.error(`Error during fetching profiles`, JSON.stringify(err, null, 2))

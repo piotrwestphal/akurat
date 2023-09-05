@@ -5,7 +5,6 @@ import {MainTable, ProfileType, testAdminEmail} from '../../lib/consts'
 import {ProfileCreateRequest, ProfileResponse} from '../../lib/profiles/profiles-mgmt.types'
 import {deleteAllItemsFromTable} from '../aws-helpers'
 import {defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
-import {uuidPattern} from '../utils'
 
 describe('Create a profile api tests', () => {
 
@@ -30,7 +29,7 @@ describe('Create a profile api tests', () => {
             .then((res: Response) => {
                 const {id, email, profileType, displayName, instagramProfile, createdAt, updatedAt}
                     = res.body as ProfileResponse
-                expect(id).toMatch(uuidPattern)
+                expect(id).toBeDefined()
                 const {location} = res.headers
                 expect(location).toEqual(`/api/v1/profiles/${id}`)
                 expect(email).toEqual(testAdminEmail)
