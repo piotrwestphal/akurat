@@ -1,0 +1,89 @@
+import {IAuthorizer, LambdaIntegration, Resource, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {Table} from 'aws-cdk-lib/aws-dynamodb'
+import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
+import {RetentionDays} from 'aws-cdk-lib/aws-logs'
+import {Construct} from 'constructs'
+import {join} from 'path'
+import {globalCommonLambdaProps} from '../cdk.consts'
+import {profileCreateReqSchema} from './schemas/profile-create-req.schema'
+
+type ProfilesMgmtProps = Readonly<{
+    mainTable: Table
+    restApi: RestApi
+    restApiV1Resource: Resource
+    authorizer: IAuthorizer
+    logRetention: RetentionDays
+}>
+export class ProfilesMgmt extends Construct {
+
+    constructor(scope: Construct,
+                id: string,
+                {
+                    mainTable,
+                    restApi,
+                    restApiV1Resource,
+                    authorizer,
+                    logRetention,
+                }: ProfilesMgmtProps) {
+        super(scope, id)
+
+        const commonProps: Partial<NodejsFunctionProps> = {
+            ...globalCommonLambdaProps,
+            logRetention,
+        }
+
+        const profilesResource = restApiV1Resource.addResource('profiles', {
+            defaultMethodOptions: {authorizer}
+        })
+
+        const myProfileResource = profilesResource.addResource('me')
+
+        const getFunc = new NodejsFunction(this, 'GetProfileFunc', {
+            description: 'Get a user profile',
+            entry: join(__dirname, 'lambdas', 'get-my-profile.ts'),
+            environment: {
+                TABLE_NAME: mainTable.tableName,
+            },
+            ...commonProps
+        })
+        mainTable.grantReadData(getFunc)
+
+        const getAllFunc = new NodejsFunction(this, 'GetAllProfilesFunc', {
+            description: 'Get all profiles',
+            entry: join(__dirname, 'lambdas', 'get-all-profiles.ts'),
+            environment: {
+                TABLE_NAME: mainTable.tableName,
+            },
+            ...commonProps
+        })
+
+        mainTable.grantReadData(getAllFunc)
+        profilesResource.addMethod('GET', new LambdaIntegration(getAllFunc))
+
+        const createFunc = new NodejsFunction(this, 'CreateProfileFunc', {
+            description: 'Create a user profile',
+            entry: join(__dirname, 'lambdas', 'create-profile.ts'),
+            environment: {
+                TABLE_NAME: mainTable.tableName,
+            },
+            ...commonProps
+        })
+
+        mainTable.grantWriteData(createFunc)
+
+        profilesResource.addMethod('POST', new LambdaIntegration(createFunc),
+            {
+                requestValidator: restApi.addRequestValidator('CreateProfileReqBodyValidator', {
+                    validateRequestBody: true,
+                }),
+                requestModels: {
+                    'application/json': restApi.addModel('ProfileCreateReqModel', {
+                        modelName: 'ProfileCreateReqModel',
+                        schema: profileCreateReqSchema
+                    })
+                },
+            })
+
+        myProfileResource.addMethod('GET', new LambdaIntegration(getFunc))
+    }
+}

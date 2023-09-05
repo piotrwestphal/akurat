@@ -1,2 +1,2 @@
-test('Auth', async () => {
+test('Test', async () => {
 })

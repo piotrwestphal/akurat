@@ -1,5 +1,5 @@
 import {
-    distributionDomainNameEnvKey,
+    distributionDomainNameEnvKey, mainTableNameOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
     userPoolIdOutputKey,
@@ -33,6 +33,7 @@ export type UserMgmtParams = Readonly<{
 }>
 
 export type CdkOutputs = Readonly<{
+    [mainTableNameOutputKey]: string
     [restApiEndpointOutputKey]: string
     [userPoolClientIdOutputKey]: string
     [userPoolIdOutputKey]: string

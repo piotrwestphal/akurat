@@ -27,7 +27,7 @@
     "paths": {
       "@lambda-types": [
         "lib/lambda.types"
-      ]
+      ],
     }
   },
   "exclude": [

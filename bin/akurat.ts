@@ -2,6 +2,7 @@
 import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
+import {mainInitialData} from '../env/init-data'
 import {BaseStack} from '../lib/base-stack'
 import {testAcceptedEmailDomain, testAdminEmail, testAdminPassword, testAutoConfirmedEmail} from '../lib/consts'
 import {EdgeStack} from '../lib/edge-stack'
@@ -69,6 +70,7 @@ new BaseStack(app, 'prod-AkuratStack', {
     artifactsBucketName: 'akurat-artifacts',
     userMgmt: {adminUsers: [], autoConfirmedEmails: [], acceptedEmailDomains: ['*']},
     logRetention: RetentionDays.ONE_MONTH,
+    mainInitialData,
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/prod',
         distributionParamsFilename: 'config.json',
