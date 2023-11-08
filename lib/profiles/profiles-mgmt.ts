@@ -1,4 +1,4 @@
-import {IAuthorizer, LambdaIntegration, Resource, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {LambdaIntegration, Resource, RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {Table} from 'aws-cdk-lib/aws-dynamodb'
 import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
@@ -11,9 +11,9 @@ type ProfilesMgmtProps = Readonly<{
     mainTable: Table
     restApi: RestApi
     restApiV1Resource: Resource
-    authorizer: IAuthorizer
     logRetention: RetentionDays
 }>
+
 export class ProfilesMgmt extends Construct {
 
     constructor(scope: Construct,
@@ -22,7 +22,6 @@ export class ProfilesMgmt extends Construct {
                     mainTable,
                     restApi,
                     restApiV1Resource,
-                    authorizer,
                     logRetention,
                 }: ProfilesMgmtProps) {
         super(scope, id)
@@ -32,10 +31,7 @@ export class ProfilesMgmt extends Construct {
             logRetention,
         }
 
-        const profilesResource = restApiV1Resource.addResource('profiles', {
-            defaultMethodOptions: {authorizer}
-        })
-
+        const profilesResource = restApiV1Resource.addResource('profiles')
         const myProfileResource = profilesResource.addResource('me')
 
         const getFunc = new NodejsFunction(this, 'GetProfileFunc', {
@@ -44,7 +40,7 @@ export class ProfilesMgmt extends Construct {
             environment: {
                 TABLE_NAME: mainTable.tableName,
             },
-            ...commonProps
+            ...commonProps,
         })
         mainTable.grantReadData(getFunc)
 
@@ -54,7 +50,7 @@ export class ProfilesMgmt extends Construct {
             environment: {
                 TABLE_NAME: mainTable.tableName,
             },
-            ...commonProps
+            ...commonProps,
         })
 
         mainTable.grantReadData(getAllFunc)
@@ -66,7 +62,7 @@ export class ProfilesMgmt extends Construct {
             environment: {
                 TABLE_NAME: mainTable.tableName,
             },
-            ...commonProps
+            ...commonProps,
         })
 
         mainTable.grantWriteData(createFunc)
@@ -79,8 +75,8 @@ export class ProfilesMgmt extends Construct {
                 requestModels: {
                     'application/json': restApi.addModel('ProfileCreateReqModel', {
                         modelName: 'ProfileCreateReqModel',
-                        schema: profileCreateReqSchema
-                    })
+                        schema: profileCreateReqSchema,
+                    }),
                 },
             })
 

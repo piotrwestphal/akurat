@@ -23,7 +23,6 @@ import {CloudFrontTarget} from 'aws-cdk-lib/aws-route53-targets'
 import {Bucket} from 'aws-cdk-lib/aws-s3'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
 import {Construct} from 'constructs'
-import {authorizationHeaderKey, refreshTokenCookieKey} from '../auth-service/auth.consts'
 import {DistributionParams, WebappDistributionParams} from '../types'
 
 type CdnProps = Readonly<{
@@ -88,8 +87,8 @@ export class Cdn extends Construct {
                         minTtl: Duration.seconds(0),
                         maxTtl: Duration.seconds(1),
                         queryStringBehavior: CacheQueryStringBehavior.all(),
-                        headerBehavior: CacheHeaderBehavior.allowList(authorizationHeaderKey),
-                        cookieBehavior: CacheCookieBehavior.allowList(refreshTokenCookieKey),
+                        headerBehavior: CacheHeaderBehavior.allowList('Authorization'),
+                        cookieBehavior: CacheCookieBehavior.allowList('token'),
                     }),
                     viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 },

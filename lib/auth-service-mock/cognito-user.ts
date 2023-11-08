@@ -1,12 +1,11 @@
-import { Construct } from 'constructs'
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources'
-import { CfnUserPoolUserToGroupAttachment, IUserPool } from 'aws-cdk-lib/aws-cognito'
+import {IUserPool} from 'aws-cdk-lib/aws-cognito'
+import {AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId} from 'aws-cdk-lib/custom-resources'
+import {Construct} from 'constructs'
 
 type CognitoUserProps = Readonly<{
     userPool: IUserPool,
     email: string,
     password: string,
-    groupName?: string,
 }>
 
 export class CognitoUser extends Construct {
@@ -17,7 +16,6 @@ export class CognitoUser extends Construct {
                     userPool,
                     email,
                     password,
-                    groupName,
                 }: CognitoUserProps) {
         super(scope, id)
 
@@ -54,17 +52,5 @@ export class CognitoUser extends Construct {
             policy: AwsCustomResourcePolicy.fromSdkCalls({resources: AwsCustomResourcePolicy.ANY_RESOURCE}),
         })
         adminSetUserPassword.node.addDependency(adminCreateUser)
-
-        // If a Group Name is provided, also add the user to this Cognito UserPool Group
-        if (groupName) {
-            const userToGroupAttachment = new CfnUserPoolUserToGroupAttachment(this, 'AttachToGroup', {
-                userPoolId: userPool.userPoolId,
-                groupName: groupName,
-                username: email,
-            })
-            userToGroupAttachment.node.addDependency(adminCreateUser)
-            userToGroupAttachment.node.addDependency(adminSetUserPassword)
-            userToGroupAttachment.node.addDependency(userPool)
-        }
     }
 }

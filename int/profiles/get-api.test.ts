@@ -1,10 +1,15 @@
 import * as request from 'supertest'
 import {Response} from 'supertest'
-import {authorizationHeaderKey} from '../../lib/auth-service/auth.consts'
 import {MainPkValue, MainTable, ProfileType, testAdminEmail} from '../../lib/consts'
 import {ProfileEntity} from '../../lib/entity.types'
 import {deleteAllItemsFromTable, getUser, putItemIntoTable} from '../aws-helpers'
-import {defaultAccessToken, defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
+import {
+    authorizationHeaderKey,
+    defaultAccessToken,
+    defaultUserToken,
+    testMainTableName,
+    testRestApiEndpoint,
+} from '../config'
 
 describe('Get a user api tests', () => {
 
