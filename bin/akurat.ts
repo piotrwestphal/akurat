@@ -30,7 +30,7 @@ new BaseStack(app, 'dev-AkuratStack', {
     envName: 'dev',
     artifactsBucketName: 'akurat-artifacts',
     authService: {
-        userPoolIdParamName: 'akurat/auth-service-mock/dev/user-pool-id',
+        userPoolIdParamName: '/akurat/auth-service-mock/dev/user-pool-id',
     },
     distribution: {
         domainPrefix: 'dev',
@@ -59,7 +59,7 @@ new BaseStack(app, 'prod-AkuratStack', {
     envName: 'prod',
     artifactsBucketName: 'akurat-artifacts',
     authService: {
-        userPoolIdParamName: 'akurat/auth-service-mock/prod/user-pool-id',
+        userPoolIdParamName: '/akurat/auth-service-mock/prod/user-pool-id',
     },
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/prod',
