@@ -13,12 +13,11 @@ const {
     MainTableName,
     RestApiEndpoint,
     UserPoolClientId,
-    UserPoolId,
 } = outputsJson[cdkStackName] as CdkOutputs
 
 export const testMainTableName = MainTableName
 export const testRestApiEndpoint = RestApiEndpoint
-export const testCognitoUserPoolId = UserPoolId
+export const authorizationHeaderKey = 'Authorization'
 export const testCognitoUserPoolClientId = UserPoolClientId
 
 export let defaultUserToken = ''

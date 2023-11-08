@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
-import {mainInitialData} from '../env/init-data'
+import 'source-map-support/register'
 import {BaseStack} from '../lib/base-stack'
-import {testAcceptedEmailDomain, testAdminEmail, testAdminPassword, testAutoConfirmedEmail} from '../lib/consts'
+import {testAdminEmail, testAdminPassword} from '../lib/consts'
 import {EdgeStack} from '../lib/edge-stack'
 import {RootStack} from '../lib/root-stack'
 
@@ -30,24 +29,17 @@ new BaseStack(app, 'dev-AkuratStack', {
     env: {account: '412644677543', region: 'eu-central-1'},
     envName: 'dev',
     artifactsBucketName: 'akurat-artifacts',
-    userMgmt: {
-        adminUsers: [
-            {
-                email: 'piotr.westphal@gmail.com',
-                password: 'Passw0rd',
-            },
-        ],
-        autoConfirmedEmails: [],
-        acceptedEmailDomains: ['gmail.com'],
+    authService: {
+        userPoolIdParamName: 'akurat/auth-service-mock/dev/user-pool-id',
     },
-    logRetention: RetentionDays.ONE_WEEK,
     distribution: {
+        domainPrefix: 'dev',
         distributionArtifactsS3KeyPrefix: 'distribution/dev',
         distributionParamsFilename: 'config.json',
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
-        domainPrefix: 'dev',
     },
+    logRetention: RetentionDays.ONE_WEEK,
 })
 
 new BaseStack(app, `int-${cdkTestStackName}`, {
@@ -55,10 +47,8 @@ new BaseStack(app, `int-${cdkTestStackName}`, {
     env: {account: '412644677543', region: 'eu-central-1'},
     envName: 'int',
     artifactsBucketName: 'akurat-artifacts',
-    userMgmt: {
-        adminUsers: [{email: testAdminEmail, password: testAdminPassword}],
-        autoConfirmedEmails: [testAutoConfirmedEmail],
-        acceptedEmailDomains: [testAcceptedEmailDomain],
+    authService: {
+        testUser: {email: testAdminEmail, password: testAdminPassword},
     },
     logRetention: RetentionDays.ONE_WEEK,
 })
@@ -68,13 +58,14 @@ new BaseStack(app, 'prod-AkuratStack', {
     env: {account: '412644677543', region: 'eu-central-1'},
     envName: 'prod',
     artifactsBucketName: 'akurat-artifacts',
-    userMgmt: {adminUsers: [], autoConfirmedEmails: [], acceptedEmailDomains: ['*']},
-    logRetention: RetentionDays.ONE_MONTH,
-    mainInitialData,
+    authService: {
+        userPoolIdParamName: 'akurat/auth-service-mock/prod/user-pool-id',
+    },
     distribution: {
         distributionArtifactsS3KeyPrefix: 'distribution/prod',
         distributionParamsFilename: 'config.json',
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
     },
+    logRetention: RetentionDays.ONE_MONTH,
 })

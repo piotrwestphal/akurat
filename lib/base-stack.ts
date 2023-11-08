@@ -1,39 +1,33 @@
-import {CfnOutput, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
-import {ResponseType, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
+import {CognitoUserPoolsAuthorizer, IAuthorizer, ResponseType, RestApi} from 'aws-cdk-lib/aws-apigateway'
+import {UserPool} from 'aws-cdk-lib/aws-cognito'
 import {AttributeType, BillingMode, Table} from 'aws-cdk-lib/aws-dynamodb'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
+import {StringParameter} from 'aws-cdk-lib/aws-ssm'
 import {Construct} from 'constructs'
-import {AuthService} from './auth-service/auth-service'
+import {AuthServiceMock} from './auth-service-mock/auth-service-mock'
 import {Cdn} from './cdn/cdn'
 import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializer'
-import {
-    MainTable,
-    mainTableNameOutputKey,
-    restApiEndpointOutputKey,
-    userPoolClientIdOutputKey,
-    userPoolIdOutputKey,
-} from './consts'
+import {MainTable, mainTableNameOutputKey, restApiEndpointOutputKey, userPoolClientIdOutputKey} from './consts'
 import {ProfilesMgmt} from './profiles/profiles-mgmt'
-import {DistributionParams, UserMgmtParams} from './types'
-import {UserMgmt} from './user-mgmt/user-mgmt'
+import {AuthServiceMockParams, AuthServiceParams, DistributionParams} from './types'
 
 type BaseStackProps = Readonly<{
     envName: string
     artifactsBucketName: string
-    userMgmt: UserMgmtParams
+    authService: AuthServiceParams | AuthServiceMockParams
     logRetention: RetentionDays
     distribution?: DistributionParams
     mainInitialData?: InitialData
 }> & StackProps
 
-// TODO: https://stackoverflow.com/questions/71543415/how-to-change-the-url-prefix-for-fetch-calls-depending-on-dev-vs-prod-environmen
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {
                     envName,
                     artifactsBucketName,
-                    userMgmt,
+                    authService,
                     logRetention,
                     distribution,
                     mainInitialData,
@@ -66,12 +60,29 @@ export class BaseStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
         })
 
+        let authorizer: IAuthorizer
+
+        if ((authService as AuthServiceParams).userPoolIdParamName) {
+            const userPoolIdParamName = (authService as AuthServiceParams).userPoolIdParamName
+            const userPoolIdParam = StringParameter.valueForStringParameter(this, userPoolIdParamName)
+            authorizer = new CognitoUserPoolsAuthorizer(this, 'CognitoAuthorizer', {
+                cognitoUserPools: [UserPool.fromUserPoolId(this, 'UserPool', userPoolIdParam)],
+                resultsCacheTtl: Duration.minutes(5),
+            })
+        } else {
+            const {testUser} = authService as AuthServiceMockParams
+            const {
+                authorizer: mockAuthorizer,
+                userPoolClientId,
+            } = new AuthServiceMock(this, 'AuthServiceMock', {envName, testUser})
+            authorizer = mockAuthorizer
+            new CfnOutput(this, userPoolClientIdOutputKey, {value: userPoolClientId})
+        }
+
         const restApi = new RestApi(this, 'RestApi', {
             description: `[${envName}] REST api for application`,
-            cloudWatchRole: true,
-            deployOptions: {
-                stageName: envName,
-            },
+            deployOptions: {stageName: envName},
+            defaultMethodOptions: {authorizer},
         })
         // adds extended request body validation messages
         restApi.addGatewayResponse('BadRequestBodyValidationTemplate', {
@@ -83,21 +94,6 @@ export class BaseStack extends Stack {
         })
 
         const restApiV1Resource = restApi.root.addResource('api').addResource('v1')
-
-        const {authorizer, userPool} = new UserMgmt(this, 'UserMgmt', {
-            envName,
-            restApiV1Resource,
-            userMgmt,
-            logRetention,
-        })
-
-        const {userPoolClientId} = new AuthService(this, 'AuthService', {
-            restApi,
-            restApiV1Resource,
-            userPool,
-            logRetention,
-        })
-
         if (baseDomainName && distribution) {
             new Cdn(this, 'Cdn', {
                 baseDomainName,
@@ -112,7 +108,6 @@ export class BaseStack extends Stack {
             mainTable,
             restApi,
             restApiV1Resource,
-            authorizer,
             logRetention,
         })
 
@@ -127,7 +122,5 @@ export class BaseStack extends Stack {
 
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
-        new CfnOutput(this, userPoolClientIdOutputKey, {value: userPoolClientId})
-        new CfnOutput(this, userPoolIdOutputKey, {value: userPool.userPoolId})
     }
 }

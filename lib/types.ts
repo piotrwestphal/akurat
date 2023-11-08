@@ -1,8 +1,8 @@
 import {
-    distributionDomainNameEnvKey, mainTableNameOutputKey,
+    distributionDomainNameEnvKey,
+    mainTableNameOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
-    userPoolIdOutputKey,
 } from './consts'
 
 export type WebappDistributionParams = Readonly<{
@@ -26,16 +26,17 @@ export type DistributionParams = Readonly<{
     domainPrefix?: string
 }>
 
-export type UserMgmtParams = Readonly<{
-    adminUsers: UserParams[]
-    autoConfirmedEmails: string[]
-    acceptedEmailDomains: string[]
+export type AuthServiceParams = Readonly<{
+    userPoolIdParamName: string
+}>
+
+export type AuthServiceMockParams = Readonly<{
+    testUser: UserParams
 }>
 
 export type CdkOutputs = Readonly<{
     [mainTableNameOutputKey]: string
     [restApiEndpointOutputKey]: string
     [userPoolClientIdOutputKey]: string
-    [userPoolIdOutputKey]: string
     [distributionDomainNameEnvKey]: string
 }>

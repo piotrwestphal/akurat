@@ -1,13 +1,9 @@
 import {
-    AdminCreateUserCommand,
-    AdminDeleteUserCommand,
     AuthenticationResultType,
     AuthFlowType,
-    CognitoIdentityProviderClient, GetUserCommand,
+    CognitoIdentityProviderClient,
+    GetUserCommand,
     InitiateAuthCommand,
-    MessageActionType,
-    SignUpCommand,
-    UserType,
 } from '@aws-sdk/client-cognito-identity-provider'
 import {BatchWriteItemCommand, DynamoDBClient, PutItemCommand, ScanCommand} from '@aws-sdk/client-dynamodb'
 import {marshall, unmarshall} from '@aws-sdk/util-dynamodb'
@@ -15,8 +11,6 @@ import {UserParams} from '../lib/types'
 import {splitIntoChunks} from '../lib/utils'
 
 const dynamoDbClient = new DynamoDBClient({region: 'eu-central-1'})
-
-
 const cognitoClient = new CognitoIdentityProviderClient({region: 'eu-central-1'})
 
 export const putItemIntoTable = <T extends Record<string, any>>(TableName: string,
@@ -65,35 +59,5 @@ export const authorize = async (userPoolClientId: string,
 
 export const getUser = async (accessToken: string) =>
     cognitoClient.send(new GetUserCommand({
-        AccessToken: accessToken
+        AccessToken: accessToken,
     }))
-export const registerUser = async (userPoolClientId: string,
-                                   {email, password}: UserParams) =>
-    cognitoClient.send(new SignUpCommand({
-        ClientId: userPoolClientId,
-        Username: email,
-        Password: password,
-    }))
-
-export const createUser = async (userPoolId: string,
-                                 email: string): Promise<UserType> => {
-    const createUserResult = await cognitoClient.send(new AdminCreateUserCommand({
-        UserPoolId: userPoolId,
-        Username: email,
-        MessageAction: MessageActionType.SUPPRESS,
-    }))
-    return createUserResult.User!
-}
-
-export const deleteUser = async (userPoolId: string,
-                                 email: string) => {
-    try {
-        await cognitoClient.send(new AdminDeleteUserCommand({
-            UserPoolId: userPoolId,
-            Username: email,
-        }))
-        console.log(`User with an email [${email}] has been deleted`)
-    } catch (err) {
-        console.log(`There is no user with an email [${email}]`)
-    }
-}

@@ -1,10 +1,9 @@
 import * as request from 'supertest'
 import {Response} from 'supertest'
-import {authorizationHeaderKey} from '../../lib/auth-service/auth.consts'
 import {MainTable, ProfileType, testAdminEmail} from '../../lib/consts'
 import {ProfileCreateRequest, ProfileResponse} from '../../lib/profiles/profiles-mgmt.types'
 import {deleteAllItemsFromTable} from '../aws-helpers'
-import {defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
+import {authorizationHeaderKey, defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
 
 describe('Create a profile api tests', () => {
 
