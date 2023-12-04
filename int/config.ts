@@ -1,3 +1,4 @@
+import {join} from 'path'
 import { authorize } from './aws-helpers'
 import { testAdminEmail, testAdminPassword } from '../lib/consts'
 import {CdkOutputs} from "../lib/types";
@@ -13,13 +14,15 @@ const {
     MainTableName,
     RestApiEndpoint,
     UserPoolClientId,
+    AssetsBucketName,
 } = outputsJson[cdkStackName] as CdkOutputs
 
 export const testMainTableName = MainTableName
 export const testRestApiEndpoint = RestApiEndpoint
 export const authorizationHeaderKey = 'Authorization'
 export const testCognitoUserPoolClientId = UserPoolClientId
-
+export const assetsBucketName = AssetsBucketName
+export const assetsDirPath = join(__dirname, '_assets')
 export let defaultUserToken = ''
 export let defaultAccessToken = ''
 

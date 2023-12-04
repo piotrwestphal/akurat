@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
+import {RemovalPolicy} from 'aws-cdk-lib'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import 'source-map-support/register'
 import {BaseStack} from '../lib/base-stack'
@@ -39,9 +40,11 @@ new BaseStack(app, 'dev-AkuratStack', {
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
     },
+    resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
 })
 
+// TODO: deal with proper content-type in the webapp returned from cdn
 new BaseStack(app, `int-${cdkTestStackName}`, {
     description: '[int] Backend infrastructure for the Akurat App',
     env: {account: '412644677543', region: 'eu-central-1'},
@@ -50,6 +53,7 @@ new BaseStack(app, `int-${cdkTestStackName}`, {
     authService: {
         testUser: {email: testAdminEmail, password: testAdminPassword},
     },
+    resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
 })
 
@@ -66,6 +70,9 @@ new BaseStack(app, 'prod-AkuratStack', {
         distributionParamsFilename: 'config.json',
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
+    },
+    mainTableProps: {
+        pointInTimeRecovery: true,
     },
     logRetention: RetentionDays.ONE_MONTH,
 })

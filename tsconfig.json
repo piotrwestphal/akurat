@@ -28,7 +28,8 @@
       "@lambda-types": [
         "lib/lambda.types"
       ],
-    }
+    },
+    "allowSyntheticDefaultImports": true
   },
   "exclude": [
     "node_modules",

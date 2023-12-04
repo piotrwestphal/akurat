@@ -18,3 +18,13 @@ export type ProfilesResponse = Readonly<{
     items: ProfileResponse[]
     next?: string
 }>
+
+export type UploadImageRequest = Readonly<{
+    image: string
+}>
+
+export type UploadImageResponse = Readonly<{
+    imgKey: string
+    origKey: string
+    thumbKey: string
+}>
