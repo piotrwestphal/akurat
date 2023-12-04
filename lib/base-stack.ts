@@ -1,35 +1,50 @@
 import {CfnOutput, Duration, RemovalPolicy, Stack, StackProps} from 'aws-cdk-lib'
 import {CognitoUserPoolsAuthorizer, IAuthorizer, ResponseType, RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {UserPool} from 'aws-cdk-lib/aws-cognito'
-import {AttributeType, BillingMode, Table} from 'aws-cdk-lib/aws-dynamodb'
+import {AttributeType, BillingMode, Table, TableProps} from 'aws-cdk-lib/aws-dynamodb'
+import {Code, LayerVersion, Runtime} from 'aws-cdk-lib/aws-lambda'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {StringParameter} from 'aws-cdk-lib/aws-ssm'
 import {Construct} from 'constructs'
+import {join} from 'path'
 import {AuthServiceMock} from './auth-service-mock/auth-service-mock'
 import {Cdn} from './cdn/cdn'
 import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializer'
-import {MainTable, mainTableNameOutputKey, restApiEndpointOutputKey, userPoolClientIdOutputKey} from './consts'
+import {
+    assetsBucketNameOutputKey,
+    assetsBucketTempS3Key,
+    MainTable,
+    mainTableNameOutputKey,
+    restApiEndpointOutputKey,
+    userPoolClientIdOutputKey,
+} from './consts'
+import {ImagesMgmt} from './images/images-mgmt'
 import {ProfilesMgmt} from './profiles/profiles-mgmt'
-import {AuthServiceMockParams, AuthServiceParams, DistributionParams} from './types'
+import {AuthServiceMockParams, AuthServiceParams, DistributionParams, LambdaLayerDef} from './types'
 
 type BaseStackProps = Readonly<{
     envName: string
     artifactsBucketName: string
     authService: AuthServiceParams | AuthServiceMockParams
     logRetention: RetentionDays
+    resourceRemovalPolicy?: RemovalPolicy
     distribution?: DistributionParams
+    mainTableProps?: Partial<TableProps>
     mainInitialData?: InitialData
 }> & StackProps
 
+// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_cognito-bucket.html
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {
                     envName,
                     artifactsBucketName,
                     authService,
+                    resourceRemovalPolicy,
                     logRetention,
                     distribution,
+                    mainTableProps,
                     mainInitialData,
                     ...props
                 }: BaseStackProps) {
@@ -41,8 +56,22 @@ export class BaseStack extends Stack {
             publicReadAccess: false,
             versioned: true,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-            removalPolicy: RemovalPolicy.DESTROY,
-            autoDeleteObjects: true,
+            removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
+            autoDeleteObjects: resourceRemovalPolicy === RemovalPolicy.DESTROY,
+        })
+
+        const assetsBucket = new Bucket(this, 'AssetsBucket', {
+            publicReadAccess: false,
+            versioned: true,
+            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+            removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
+            autoDeleteObjects: resourceRemovalPolicy === RemovalPolicy.DESTROY,
+            lifecycleRules: [
+                {
+                    prefix: `${assetsBucketTempS3Key}/`,
+                    expiration: Duration.days(1),
+                },
+            ],
         })
 
         const mainTable = new Table(this, 'MainTable', {
@@ -54,11 +83,23 @@ export class BaseStack extends Stack {
                 name: MainTable.SK,
                 type: AttributeType.STRING,
             },
-            readCapacity: 5,
-            writeCapacity: 5,
+            readCapacity: mainTableProps?.readCapacity || 5,
+            writeCapacity: mainTableProps?.writeCapacity || 5,
+            pointInTimeRecovery: mainTableProps?.pointInTimeRecovery || false,
             billingMode: BillingMode.PROVISIONED,
-            removalPolicy: RemovalPolicy.DESTROY,
+            removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
+
+        const sharpLayer = {
+            layerVer: new LayerVersion(this, 'SharpClient', {
+                layerVersionName: `${this.stackName}SharpClient`,
+                description: 'Sharp client',
+                compatibleRuntimes: [Runtime.NODEJS_18_X],
+                code: Code.fromAsset(join('layers', 'sharp-client')),
+                removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
+            }),
+            moduleName: 'sharp',
+        } satisfies LambdaLayerDef
 
         let authorizer: IAuthorizer
 
@@ -99,6 +140,7 @@ export class BaseStack extends Stack {
                 baseDomainName,
                 artifactsBucketName,
                 webappBucket,
+                assetsBucket,
                 restApi,
                 distribution,
             })
@@ -108,6 +150,13 @@ export class BaseStack extends Stack {
             mainTable,
             restApi,
             restApiV1Resource,
+            logRetention,
+        })
+
+        new ImagesMgmt(this, 'ImagesMgmt', {
+            restApiV1Resource,
+            sharpLayer,
+            assetsBucket,
             logRetention,
         })
 
@@ -122,5 +171,6 @@ export class BaseStack extends Stack {
 
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
+        new CfnOutput(this, assetsBucketNameOutputKey, {value: assetsBucket.bucketName})
     }
 }

@@ -23,12 +23,14 @@ import {CloudFrontTarget} from 'aws-cdk-lib/aws-route53-targets'
 import {Bucket} from 'aws-cdk-lib/aws-s3'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment'
 import {Construct} from 'constructs'
+import {cloudfrontAssetsPrefix} from '../consts'
 import {DistributionParams, WebappDistributionParams} from '../types'
 
 type CdnProps = Readonly<{
     baseDomainName: string
     artifactsBucketName: string
     webappBucket: Bucket
+    assetsBucket: Bucket
     restApi: RestApi
     distribution: DistributionParams
 }>
@@ -41,6 +43,7 @@ export class Cdn extends Construct {
                     baseDomainName,
                     artifactsBucketName,
                     webappBucket,
+                    assetsBucket,
                     restApi,
                     distribution,
                 }: CdnProps) {
@@ -91,6 +94,14 @@ export class Cdn extends Construct {
                         cookieBehavior: CacheCookieBehavior.allowList('token'),
                     }),
                     viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                },
+                [`/${cloudfrontAssetsPrefix}/*`]: {
+                    origin: new S3Origin(assetsBucket, {originAccessIdentity}),
+                    compress: true,
+                    allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+                    cachedMethods: CachedMethods.CACHE_GET_HEAD,
+                    viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    cachePolicy: CachePolicy.CACHING_OPTIMIZED,
                 },
             },
             priceClass: PriceClass.PRICE_CLASS_100,

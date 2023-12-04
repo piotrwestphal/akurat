@@ -43,6 +43,7 @@ export class ProfilesMgmt extends Construct {
             ...commonProps,
         })
         mainTable.grantReadData(getFunc)
+        myProfileResource.addMethod('GET', new LambdaIntegration(getFunc))
 
         const getAllFunc = new NodejsFunction(this, 'GetAllProfilesFunc', {
             description: 'Get all profiles',
@@ -64,7 +65,6 @@ export class ProfilesMgmt extends Construct {
             },
             ...commonProps,
         })
-
         mainTable.grantWriteData(createFunc)
 
         profilesResource.addMethod('POST', new LambdaIntegration(createFunc),
@@ -79,7 +79,5 @@ export class ProfilesMgmt extends Construct {
                     }),
                 },
             })
-
-        myProfileResource.addMethod('GET', new LambdaIntegration(getFunc))
     }
 }
