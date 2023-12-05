@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib'
 import {RemovalPolicy} from 'aws-cdk-lib'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import 'source-map-support/register'
+import {mainInitialData} from '../env/init-data'
 import {BaseStack} from '../lib/base-stack'
 import {testAdminEmail, testAdminPassword} from '../lib/consts'
 import {EdgeStack} from '../lib/edge-stack'
@@ -42,6 +43,7 @@ new BaseStack(app, 'dev-AkuratStack', {
     },
     resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
+    mainInitialData,
 })
 
 // TODO: deal with proper content-type in the webapp returned from cdn
