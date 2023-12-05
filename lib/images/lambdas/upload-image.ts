@@ -93,12 +93,12 @@ export const handler = async ({
             Body: v.image,
         }))))
 
-        const imgKey = `/${cloudfrontAssetsPrefix}/${imgS3Key}`
+        const key = `/${cloudfrontAssetsPrefix}/${imgS3Key}`
         const origKey = `/${cloudfrontAssetsPrefix}/${origImgS3Key}`
         const thumbKey = `/${cloudfrontAssetsPrefix}/${thumbImgS3Key}`
         return {
             statusCode: 201,
-            body: JSON.stringify({imgKey, thumbKey, origKey} satisfies UploadImageResponse),
+            body: JSON.stringify({key, thumbKey, origKey} satisfies UploadImageResponse),
         }
     } catch (err) {
         console.error(`Error during uploading an image for a user with email [${claims.email}]`, err)

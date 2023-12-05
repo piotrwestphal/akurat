@@ -1,5 +1,5 @@
 import {ProfileType} from '../consts'
-import {TimeStamps} from '../entity.types'
+import {ImageRef, TimeStamps} from '../entity.types'
 
 export type ProfileBaseReq = Readonly<{
     profileType: ProfileType
@@ -23,8 +23,4 @@ export type UploadImageRequest = Readonly<{
     image: string
 }>
 
-export type UploadImageResponse = Readonly<{
-    imgKey: string
-    origKey: string
-    thumbKey: string
-}>
+export type UploadImageResponse = ImageRef

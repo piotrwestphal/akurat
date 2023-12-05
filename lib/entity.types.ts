@@ -5,6 +5,12 @@ export interface TimeStamps {
     readonly updatedAt: number
 }
 
+export type ImageRef = Readonly<{
+    key: string
+    origKey: string
+    thumbKey: string
+}>
+
 export interface ProfileEntity extends TimeStamps {
     readonly [MainTable.PK]: MainPkValue.PROFILE
     readonly [MainTable.SK]: string                 // cognito sub
@@ -12,4 +18,5 @@ export interface ProfileEntity extends TimeStamps {
     readonly profileType: ProfileType
     readonly displayName: string
     readonly instagramProfile: string
+    readonly profilePhoto: ImageRef
 }
