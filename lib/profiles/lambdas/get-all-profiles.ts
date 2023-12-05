@@ -3,15 +3,31 @@ import {marshall, unmarshall} from '@aws-sdk/util-dynamodb'
 import {ApiGatewayEvent, ApiGatewayLambdaResponse} from '@lambda-types'
 import {MainPkValue, MainTable} from '../../consts'
 import {ProfileEntity} from '../../entity.types'
+import {isInt} from '../../utils'
 import {ProfilesResponse} from '../profiles-mgmt.types'
 import {toProfileResponse} from './profile.mapper'
 
 const tableName = process.env.TABLE_NAME as string
-const awsRegion = process.env.AWS_REGION as string
 
-const dynamoClient = new DynamoDBClient({region: awsRegion})
+const dynamoClient = new DynamoDBClient()
 
-export const handler = async (_: ApiGatewayEvent): Promise<ApiGatewayLambdaResponse> => {
+interface GetAllRequestEvent extends Omit<ApiGatewayEvent, 'queryStringParameters'> {
+    queryStringParameters?: {
+        type?: string
+        limit?: string
+        next?: string
+    }
+}
+export const handler = async (ev: GetAllRequestEvent): Promise<ApiGatewayLambdaResponse> => {
+    const typeParam = ev.queryStringParameters?.type || ''
+    const limit = ev.queryStringParameters?.limit || '50'
+    const next = ev.queryStringParameters?.next || ''
+    if (!isInt(limit)) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({message: 'The limit parameter should be an int'})
+        }
+    }
     try {
         const result = await dynamoClient.send(new QueryCommand({
             TableName: tableName,
@@ -19,7 +35,7 @@ export const handler = async (_: ApiGatewayEvent): Promise<ApiGatewayLambdaRespo
             ExpressionAttributeValues: marshall({
                 ':pk': MainPkValue.PROFILE,
             }),
-            Limit: 50,
+            Limit: parseInt(limit),
         }))
 
         const entities = (result.Items?.map(v => unmarshall(v)) || []) as ProfileEntity[]

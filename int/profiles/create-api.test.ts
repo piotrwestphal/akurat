@@ -5,6 +5,7 @@ import {ProfileCreateRequest, ProfileResponse} from '../../lib/profiles/profiles
 import {deleteAllItemsFromTable} from '../aws-helpers'
 import {authorizationHeaderKey, defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
 
+// TODO: update tests with profile photo attrs
 describe('Create a profile api tests', () => {
 
     const req = request(testRestApiEndpoint)
