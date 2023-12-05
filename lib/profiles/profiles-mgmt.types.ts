@@ -5,6 +5,7 @@ export type ProfileBaseReq = Readonly<{
     profileType: ProfileType
     displayName: string
     instagramProfile: string
+    profilePhoto: ImageRef
 }>
 
 export type ProfileCreateRequest = ProfileBaseReq
