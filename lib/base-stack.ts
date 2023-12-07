@@ -14,6 +14,7 @@ import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializ
 import {
     assetsBucketNameOutputKey,
     assetsBucketTempS3Key,
+    cloudfrontAssetsPrefix,
     MainTable,
     mainTableNameOutputKey,
     restApiEndpointOutputKey,
@@ -68,7 +69,7 @@ export class BaseStack extends Stack {
             autoDeleteObjects: resourceRemovalPolicy === RemovalPolicy.DESTROY,
             lifecycleRules: [
                 {
-                    prefix: `${assetsBucketTempS3Key}/`,
+                    prefix: `${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`,
                     expiration: Duration.days(1),
                 },
             ],

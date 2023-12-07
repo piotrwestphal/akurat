@@ -67,8 +67,8 @@ export const handler = async ({
             .toBuffer()
         const thumbImgMeta = await sharp(thumbImgBuffer).metadata()
 
-        const origImgS3Key = `${s3TempPrefixForUser}/${randomUUID()}.${origImgMeta.format}`
-        const thumbImgS3Key = `${s3TempPrefixForUser}/${randomUUID()}.${thumbImgMeta.format}`
+        const origImgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${origImgMeta.format}`
+        const thumbImgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${thumbImgMeta.format}`
 
         const imgsToSave = [
             {image: origImgBuffer, key: origImgS3Key},
@@ -93,9 +93,9 @@ export const handler = async ({
             Body: v.image,
         }))))
 
-        const key = `/${cloudfrontAssetsPrefix}/${imgS3Key}`
-        const origKey = `/${cloudfrontAssetsPrefix}/${origImgS3Key}`
-        const thumbKey = `/${cloudfrontAssetsPrefix}/${thumbImgS3Key}`
+        const key = `/${imgS3Key}`
+        const origKey = `/${origImgS3Key}`
+        const thumbKey = `/${thumbImgS3Key}`
         return {
             statusCode: 201,
             body: JSON.stringify({key, thumbKey, origKey} satisfies UploadImageResponse),

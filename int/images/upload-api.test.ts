@@ -44,7 +44,7 @@ describe('Create an image api tests', () => {
         expect(key).toBe(origKey)
 
         const pendingGetObjects = [key, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -87,7 +87,7 @@ describe('Create an image api tests', () => {
         expect(key).not.toBe(origKey)
 
         const pendingGetObjects = [key, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -130,7 +130,7 @@ describe('Create an image api tests', () => {
         expect(key).not.toBe(origKey)
 
         const pendingGetObjects = [key, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -214,4 +214,4 @@ describe('Create an image api tests', () => {
     }, 5000)
 })
 
-const removeCdnPrefix = (s3Key: string) => s3Key.replace(`/${cloudfrontAssetsPrefix}/`, '')
+const removeFirstSlash = (s3Key: string) => s3Key.replace(/^\//, '')
