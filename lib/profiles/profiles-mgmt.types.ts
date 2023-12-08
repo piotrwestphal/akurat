@@ -5,10 +5,10 @@ export type ProfileBaseReq = Readonly<{
     profileType: ProfileType
     displayName: string
     instagramProfile: string
-    profilePhoto: ImageRef
+    profileImage: ImageRef
 }>
 
-export type ProfileCreateRequest = ProfileBaseReq
+export type ProfileCreateRequest = Omit<ProfileBaseReq, 'profileImage'> & { profileImage?: ImageRef }
 export type ProfileUpdateRequest = ProfileBaseReq
 export type ProfileResponse = Readonly<{
     id: string

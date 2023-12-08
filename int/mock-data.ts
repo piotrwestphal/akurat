@@ -14,7 +14,7 @@ export const randomProfile = (): ProfileEntity => {
         displayName: `${firstName} ${lastName}`,
         email: faker.internet.email({firstName, lastName}),
         instagramProfile: faker.internet.userName({firstName, lastName}),
-        profilePhoto: {
+        profileImage: {
           key: avatarImg,
           origKey: avatarImg,
           thumbKey: avatarImg

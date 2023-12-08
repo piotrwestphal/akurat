@@ -35,7 +35,7 @@ type BaseStackProps = Readonly<{
     mainInitialData?: InitialData
 }> & StackProps
 
-// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_cognito-bucket.html
+// TODO: deal with proper content-type in the webapp returned from cdn
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {

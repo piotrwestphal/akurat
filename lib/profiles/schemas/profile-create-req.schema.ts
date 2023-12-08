@@ -4,7 +4,7 @@ import {ImageRef} from '../../entity.types'
 import {ProfileCreateRequest} from '../profiles-mgmt.types'
 
 const requiredProperties: Array<keyof ProfileCreateRequest> = ['profileType', 'displayName']
-const requiredProfilePhotoProperties: Array<keyof ImageRef> = ['key', 'origKey', 'thumbKey']
+const requiredProfileImageProperties: Array<keyof ImageRef> = ['key', 'origKey', 'thumbKey']
 
 export const profileCreateReqSchema: JsonSchema = {
     schema: JsonSchemaVersion.DRAFT7,
@@ -15,7 +15,7 @@ export const profileCreateReqSchema: JsonSchema = {
         profileType: {type: JsonSchemaType.STRING, enum: Object.values(ProfileType)},
         displayName: {type: JsonSchemaType.STRING},
         instagramProfile: {type: JsonSchemaType.STRING},
-        profilePhoto: {
+        profileImage: {
             type: JsonSchemaType.OBJECT,
             additionalProperties: false,
             properties: {
@@ -23,7 +23,7 @@ export const profileCreateReqSchema: JsonSchema = {
                 origKey: {type: JsonSchemaType.STRING},
                 thumbKey: {type: JsonSchemaType.STRING},
             } satisfies Record<keyof ImageRef, JsonSchema>,
-            required: requiredProfilePhotoProperties
+            required: requiredProfileImageProperties
         },
     } satisfies Record<keyof ProfileCreateRequest, JsonSchema>,
     required: requiredProperties,

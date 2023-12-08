@@ -18,5 +18,5 @@ export interface ProfileEntity extends TimeStamps {
     readonly profileType: ProfileType
     readonly displayName: string
     readonly instagramProfile: string
-    readonly profilePhoto: ImageRef
+    readonly profileImage: ImageRef
 }

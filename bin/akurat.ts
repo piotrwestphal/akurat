@@ -43,9 +43,9 @@ new BaseStack(app, 'dev-AkuratStack', {
     },
     resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
+    mainInitialData,
 })
 
-// TODO: deal with proper content-type in the webapp returned from cdn
 new BaseStack(app, `int-${cdkTestStackName}`, {
     description: '[int] Backend infrastructure for the Akurat App',
     env: {account: '412644677543', region: 'eu-central-1'},

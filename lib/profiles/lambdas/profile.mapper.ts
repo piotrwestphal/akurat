@@ -8,7 +8,7 @@ export const toProfileResponse = ({
                                       profileType,
                                       displayName,
                                       instagramProfile,
-                                      profilePhoto,
+                                      profileImage,
                                       createdAt,
                                       updatedAt,
                                   }: ProfileEntity): ProfileResponse => ({
@@ -17,7 +17,7 @@ export const toProfileResponse = ({
     profileType,
     displayName,
     instagramProfile,
-    profilePhoto,
+    profileImage,
     createdAt,
     updatedAt,
 })
@@ -28,7 +28,7 @@ export const toProfileEntity = ({
                                     instagramProfile,
                                     sub,
                                     email,
-                                    profilePhoto = {key: '', thumbKey: '', origKey: ''},
+                                    profileImage = {key: '', thumbKey: '', origKey: ''},
                                 }: ProfileCreateRequest & Readonly<{ sub: string, email: string }>,
                                 now = Date.now()): ProfileEntity => ({
     pk: MainPkValue.PROFILE,
@@ -37,7 +37,7 @@ export const toProfileEntity = ({
     profileType,
     displayName,
     instagramProfile,
-    profilePhoto,
+    profileImage,
     createdAt: now,
     updatedAt: now,
 })

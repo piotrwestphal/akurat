@@ -29,7 +29,7 @@ describe('Get a user api tests', () => {
             profileType: ProfileType.PHOTO,
             displayName: 'Test',
             instagramProfile: '',
-            profilePhoto: {
+            profileImage: {
               key: '',
               origKey: '',
               thumbKey: ''
