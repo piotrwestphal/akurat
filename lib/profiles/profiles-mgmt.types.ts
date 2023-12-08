@@ -1,13 +1,14 @@
 import {ProfileType} from '../consts'
-import {TimeStamps} from '../entity.types'
+import {ImageRef, TimeStamps} from '../entity.types'
 
 export type ProfileBaseReq = Readonly<{
     profileType: ProfileType
     displayName: string
     instagramProfile: string
+    profileImage: ImageRef
 }>
 
-export type ProfileCreateRequest = ProfileBaseReq
+export type ProfileCreateRequest = Omit<ProfileBaseReq, 'profileImage'> & { profileImage?: ImageRef }
 export type ProfileUpdateRequest = ProfileBaseReq
 export type ProfileResponse = Readonly<{
     id: string
@@ -23,8 +24,4 @@ export type UploadImageRequest = Readonly<{
     image: string
 }>
 
-export type UploadImageResponse = Readonly<{
-    imgKey: string
-    origKey: string
-    thumbKey: string
-}>
+export type UploadImageResponse = ImageRef

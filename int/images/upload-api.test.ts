@@ -31,20 +31,20 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {imgKey, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(imgKey).toBeDefined()
+        const {key, origKey, thumbKey} = res.body as UploadImageResponse
+        expect(key).toBeDefined()
         expect(origKey).toBeDefined()
         expect(thumbKey).toBeDefined()
-        expect(imgKey.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
-        expect(imgKey.endsWith('.webp')).toBeTruthy()
+        expect(key.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
+        expect(key.endsWith('.webp')).toBeTruthy()
         expect(origKey.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
         expect(origKey.endsWith('.webp')).toBeTruthy()
         expect(thumbKey.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
         expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(imgKey).toBe(origKey)
+        expect(key).toBe(origKey)
 
-        const pendingGetObjects = [imgKey, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+        const pendingGetObjects = [key, origKey, thumbKey]
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -77,17 +77,17 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {imgKey, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(imgKey).toBeDefined()
+        const {key, origKey, thumbKey} = res.body as UploadImageResponse
+        expect(key).toBeDefined()
         expect(origKey).toBeDefined()
         expect(thumbKey).toBeDefined()
-        expect(imgKey.endsWith('.webp')).toBeTruthy()
+        expect(key.endsWith('.webp')).toBeTruthy()
         expect(origKey.endsWith('.jpeg')).toBeTruthy()
         expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(imgKey).not.toBe(origKey)
+        expect(key).not.toBe(origKey)
 
-        const pendingGetObjects = [imgKey, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+        const pendingGetObjects = [key, origKey, thumbKey]
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -120,17 +120,17 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {imgKey, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(imgKey).toBeDefined()
+        const {key, origKey, thumbKey} = res.body as UploadImageResponse
+        expect(key).toBeDefined()
         expect(origKey).toBeDefined()
         expect(thumbKey).toBeDefined()
-        expect(imgKey.endsWith('.webp')).toBeTruthy()
+        expect(key.endsWith('.webp')).toBeTruthy()
         expect(origKey.endsWith('.jpeg')).toBeTruthy()
         expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(imgKey).not.toBe(origKey)
+        expect(key).not.toBe(origKey)
 
-        const pendingGetObjects = [imgKey, origKey, thumbKey]
-            .map(key => removeCdnPrefix(key))
+        const pendingGetObjects = [key, origKey, thumbKey]
+            .map(key => removeFirstSlash(key))
             .map(key => getObjectFromBucket(assetsBucketName, key))
         const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
@@ -214,4 +214,4 @@ describe('Create an image api tests', () => {
     }, 5000)
 })
 
-const removeCdnPrefix = (s3Key: string) => s3Key.replace(`/${cloudfrontAssetsPrefix}/`, '')
+const removeFirstSlash = (s3Key: string) => s3Key.replace(/^\//, '')

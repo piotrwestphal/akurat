@@ -6,16 +6,15 @@ import {ProfileCreateRequest} from '../profiles-mgmt.types'
 import {toProfileEntity, toProfileResponse} from './profile.mapper'
 
 const tableName = process.env.TABLE_NAME as string
-const awsRegion = process.env.AWS_REGION as string
 
-const dynamoClient = new DynamoDBClient({region: awsRegion})
+const dynamoClient = new DynamoDBClient()
 export const handler = async ({
                                   body,
                                   requestContext: {
                                       path,
                                       authorizer: {
-                                          claims
-                                      }
+                                          claims,
+                                      },
                                   },
                               }: ApiGatewayEvent): Promise<ApiGatewayLambdaResponse> => {
     const createRequest = JSON.parse(body) as ProfileCreateRequest

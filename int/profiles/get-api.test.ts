@@ -29,6 +29,11 @@ describe('Get a user api tests', () => {
             profileType: ProfileType.PHOTO,
             displayName: 'Test',
             instagramProfile: '',
+            profileImage: {
+              key: '',
+              origKey: '',
+              thumbKey: ''
+            },
             createdAt: now,
             updatedAt: now,
         } satisfies ProfileEntity

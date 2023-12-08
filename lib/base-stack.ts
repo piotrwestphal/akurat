@@ -14,6 +14,7 @@ import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializ
 import {
     assetsBucketNameOutputKey,
     assetsBucketTempS3Key,
+    cloudfrontAssetsPrefix,
     MainTable,
     mainTableNameOutputKey,
     restApiEndpointOutputKey,
@@ -34,7 +35,7 @@ type BaseStackProps = Readonly<{
     mainInitialData?: InitialData
 }> & StackProps
 
-// https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_s3_cognito-bucket.html
+// TODO: deal with proper content-type in the webapp returned from cdn
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {
@@ -68,7 +69,7 @@ export class BaseStack extends Stack {
             autoDeleteObjects: resourceRemovalPolicy === RemovalPolicy.DESTROY,
             lifecycleRules: [
                 {
-                    prefix: `${assetsBucketTempS3Key}/`,
+                    prefix: `${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`,
                     expiration: Duration.days(1),
                 },
             ],

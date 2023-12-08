@@ -6,6 +6,7 @@ import {deleteAllItemsFromTable, putItemIntoTable} from '../aws-helpers'
 import {authorizationHeaderKey, defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
 import {randomProfile} from '../mock-data'
 
+// TODO: add tests for query string params
 describe('Get a user api tests', () => {
 
     const req = request(testRestApiEndpoint)
