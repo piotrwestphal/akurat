@@ -83,7 +83,7 @@ export const handler = async ({
         } else {
             const imgBuffer = await sharp(origImgBuffer).webp().toBuffer()
             const imgMeta = await sharp(thumbImgBuffer).metadata()
-            imgS3Key = `${s3TempPrefixForUser}/${randomUUID()}.${imgMeta.format}`
+            imgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${imgMeta.format}`
             imgsToSave.push({image: imgBuffer, key: imgS3Key})
         }
 
