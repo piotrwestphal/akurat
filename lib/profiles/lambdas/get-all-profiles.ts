@@ -32,6 +32,7 @@ export const handler = async (ev: GetAllRequestEvent): Promise<ApiGatewayLambdaR
     }
     try {
         const {filterExp, expAttrVals, exprAttrNames} = composeDynamoFilters({profileType},filterAttrs)
+        console.log({filterExp, expAttrVals, exprAttrNames})
         const result = await dynamoClient.send(new QueryCommand({
             TableName: tableName,
             KeyConditionExpression: `${MainTable.PK} = :pk`,
@@ -45,6 +46,7 @@ export const handler = async (ev: GetAllRequestEvent): Promise<ApiGatewayLambdaR
             } : undefined,
             Limit: parseInt(limit),
         }))
+        console.log('COUNT: ', result.Items?.length)
 
         const entities = (result.Items?.map(v => unmarshall(v)) || []) as ProfileEntity[]
 
