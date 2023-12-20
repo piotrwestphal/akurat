@@ -24,6 +24,7 @@ export const handler = async (ev: GetAllRequestEvent): Promise<ApiGatewayLambdaR
     const profileType = ev.queryStringParameters?.type || ''
     const limit = ev.queryStringParameters?.limit || '50'
     const next = ev.queryStringParameters?.next || ''
+    console.log({profileType, limit})
     if (!isInt(limit)) {
         return {
             statusCode: 400,
