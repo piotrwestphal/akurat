@@ -43,7 +43,6 @@ new BaseStack(app, 'dev-AkuratStack', {
     },
     resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
-    mainInitialData,
 })
 
 new BaseStack(app, `int-${cdkTestStackName}`, {
@@ -76,5 +75,4 @@ new BaseStack(app, 'prod-AkuratStack', {
         pointInTimeRecovery: true,
     },
     logRetention: RetentionDays.ONE_MONTH,
-    mainInitialData,
 })

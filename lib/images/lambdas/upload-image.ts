@@ -71,8 +71,8 @@ export const handler = async ({
         const thumbImgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${thumbImgMeta.format}`
 
         const imgsToSave = [
-            {image: origImgBuffer, key: origImgS3Key},
-            {image: thumbImgBuffer, key: thumbImgS3Key},
+            {image: origImgBuffer, key: origImgS3Key, mimeType: `image/${origImgMeta.format}`},
+            {image: thumbImgBuffer, key: thumbImgS3Key, mimeType: `image/${thumbImgMeta.format}`},
         ]
 
         let imgS3Key: string
@@ -84,13 +84,14 @@ export const handler = async ({
             const imgBuffer = await sharp(origImgBuffer).webp().toBuffer()
             const imgMeta = await sharp(thumbImgBuffer).metadata()
             imgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${imgMeta.format}`
-            imgsToSave.push({image: imgBuffer, key: imgS3Key})
+            imgsToSave.push({image: imgBuffer, key: imgS3Key, mimeType: `image/${imgMeta.format}`})
         }
 
         await Promise.all(imgsToSave.map(v => s3Client.send(new PutObjectCommand({
             Bucket: bucketName,
             Key: v.key,
             Body: v.image,
+            ContentType: v.mimeType,
         }))))
 
         const key = `/${imgS3Key}`

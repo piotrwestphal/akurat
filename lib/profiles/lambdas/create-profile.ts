@@ -8,6 +8,7 @@ import {toProfileEntity, toProfileResponse} from './profile.mapper'
 const tableName = process.env.TABLE_NAME as string
 
 const dynamoClient = new DynamoDBClient()
+// TODO: remove temp images and move to permanent location
 export const handler = async ({
                                   body,
                                   requestContext: {
@@ -28,7 +29,6 @@ export const handler = async ({
             Item: marshall(itemToCreate),
         }))
         console.log(`Profile for an email address [${email}] has been created. Item PK: [${itemToCreate.pk}] SK: [${itemToCreate.sk}]`)
-
         return {
             statusCode: 201,
             body: JSON.stringify(toProfileResponse(itemToCreate)),
