@@ -6,6 +6,7 @@ import {ProfileEntity} from '../../entity.types'
 import {composeDynamoFilters, isInt} from '../../utils'
 import {ProfilesResponse} from '../profiles-mgmt.types'
 import {toProfileResponse} from './profile.mapper'
+import {defaultSort} from './sorter'
 
 const tableName = process.env.TABLE_NAME as string
 
@@ -54,7 +55,7 @@ export const handler = async (ev: GetAllRequestEvent): Promise<ApiGatewayLambdaR
         return {
             statusCode: 200,
             body: JSON.stringify({
-                items: entities.map(v => toProfileResponse(v)),
+                items: entities.sort(defaultSort).map(v => toProfileResponse(v)),
                 next: result.LastEvaluatedKey
                     ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
                     : undefined,
