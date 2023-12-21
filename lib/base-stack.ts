@@ -93,7 +93,7 @@ export class BaseStack extends Stack {
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
 
-        const alarmsTopic = new Topic(this, 'Alarms')
+        const alarmsTopic = new Topic(this, 'AlarmsTopic')
 
         const sharpLayer = {
             layerVer: new LayerVersion(this, 'SharpClient', {

@@ -48,3 +48,8 @@ export type LambdaLayerDef = Readonly<{
     layerVer: LayerVersion
     moduleName: string
 }>
+
+export type AlarmMessage = Readonly<{
+    source: string
+    payload: any
+}>
