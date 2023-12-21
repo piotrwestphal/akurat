@@ -57,16 +57,6 @@ export const handler = async (ev: SqsEvent): Promise<void> => {
             const newOrigS3Key = `${s3TempPrefixForUser}/${orig.id}.${orig.ext}`
             const newThmbS3Key = `${s3TempPrefixForUser}/${thmb.id}.${thmb.ext}`
 
-            // TODO: remove
-            console.log({
-                newPrwvS3Key,
-                newOrigS3Key,
-                newThmbS3Key,
-                oldPrwvKey: prvw.key,
-                oldOrigKey: orig.key,
-                oldThmbKey: thmb.key,
-            })
-
             await Promise.all([
                 {newS3Key: newPrwvS3Key, oldKey: prvw.key},
                 {newS3Key: newOrigS3Key, oldKey: orig.key},

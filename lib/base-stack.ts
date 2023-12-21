@@ -39,7 +39,6 @@ type BaseStackProps = Readonly<{
     mainInitialData?: InitialData
 }> & StackProps
 
-// TODO: deal with proper content-type in the webapp returned from cdn
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {
