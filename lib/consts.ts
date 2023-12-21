@@ -25,3 +25,7 @@ export enum ProfileType {
     PHOTO = 'PHOTO',
     BRAND = 'BRAND'
 }
+
+export enum ImageType {
+    PROFILE = 'PROFILE',
+}

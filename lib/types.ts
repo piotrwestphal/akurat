@@ -2,10 +2,12 @@ import {LayerVersion} from 'aws-cdk-lib/aws-lambda'
 import {
     assetsBucketNameOutputKey,
     distributionDomainNameOutputKey,
+    ImageType,
     mainTableNameOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
 } from './consts'
+import {ImageVariants} from './entity.types'
 
 export type WebappDistributionParams = Readonly<{
     webappBucketName: string
@@ -55,5 +57,11 @@ export type LambdaLayerDef = Readonly<{
 
 export type AlarmMessage = Readonly<{
     source: string
-    payload: any
+    payload: Readonly<{ message: string, details: string }>
+}>
+
+export type ProcessImageMessage = Readonly<{
+    profileId: string
+    type: ImageType
+    imgVars: ImageVariants
 }>

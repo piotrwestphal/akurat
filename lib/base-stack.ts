@@ -6,6 +6,7 @@ import {Code, LayerVersion, Runtime} from 'aws-cdk-lib/aws-lambda'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
 import {Topic} from 'aws-cdk-lib/aws-sns'
+import {Queue} from 'aws-cdk-lib/aws-sqs'
 import {StringParameter} from 'aws-cdk-lib/aws-ssm'
 import {Construct} from 'constructs'
 import {join} from 'path'
@@ -95,6 +96,9 @@ export class BaseStack extends Stack {
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
 
+        const processImageQueue = new Queue(this, 'ProcessImageQueue')
+        const alarmsTopic = new Topic(this, 'AlarmsTopic')
+
         const sharpLayer = {
             layerVer: new LayerVersion(this, 'SharpClient', {
                 layerVersionName: `${this.stackName}SharpClient`,
@@ -165,15 +169,19 @@ export class BaseStack extends Stack {
 
         new ProfilesMgmt(this, 'ProfilesMgmt', {
             mainTable,
+            processImageQueue,
             restApi,
             restApiV1Resource,
             logRetention,
         })
 
         new ImagesMgmt(this, 'ImagesMgmt', {
+            mainTable,
+            assetsBucket,
+            processImageQueue,
+            alarmsTopic,
             restApiV1Resource,
             sharpLayer,
-            assetsBucket,
             logRetention,
         })
 
@@ -187,7 +195,6 @@ export class BaseStack extends Stack {
         }
 
         if (alarms) {
-            const alarmsTopic = new Topic(this, 'AlarmsTopic')
             new Alarms(this, 'Alarms', {
                 alarms,
                 alarmsTopic,

@@ -30,9 +30,9 @@ describe('Get a user api tests', () => {
             displayName: 'Test',
             instagramProfile: '',
             profileImage: {
-              key: '',
-              origKey: '',
-              thumbKey: ''
+                prvw: {id: '', key: '', ext: '', height: 0, width: 0},
+                orig: {id: '', key: '', ext: '', height: 0, width: 0},
+                thmb: {id: '', key: '', ext: '', height: 0, width: 0},
             },
             createdAt: now,
             updatedAt: now,

@@ -1,10 +1,11 @@
 import {JsonSchema, JsonSchemaType, JsonSchemaVersion} from 'aws-cdk-lib/aws-apigateway'
+import {imageRefSchema} from '../../common/schemas/image-req.schema'
 import {ProfileType} from '../../consts'
-import {ImageRef} from '../../entity.types'
+import {ImageVariants} from '../../entity.types'
 import {ProfileCreateRequest} from '../profiles-mgmt.types'
 
 const requiredProperties: Array<keyof ProfileCreateRequest> = ['profileType', 'displayName']
-const requiredProfileImageProperties: Array<keyof ImageRef> = ['key', 'origKey', 'thumbKey']
+const requiredProfileImageProperties: Array<keyof ImageVariants> = ['prvw', 'orig', 'thmb']
 
 export const profileCreateReqSchema: JsonSchema = {
     schema: JsonSchemaVersion.DRAFT7,
@@ -19,11 +20,11 @@ export const profileCreateReqSchema: JsonSchema = {
             type: JsonSchemaType.OBJECT,
             additionalProperties: false,
             properties: {
-                key: {type: JsonSchemaType.STRING},
-                origKey: {type: JsonSchemaType.STRING},
-                thumbKey: {type: JsonSchemaType.STRING},
-            } satisfies Record<keyof ImageRef, JsonSchema>,
-            required: requiredProfileImageProperties
+                prvw: imageRefSchema,
+                orig: imageRefSchema,
+                thmb: imageRefSchema,
+            } satisfies Record<keyof ImageVariants, JsonSchema>,
+            required: requiredProfileImageProperties,
         },
     } satisfies Record<keyof ProfileCreateRequest, JsonSchema>,
     required: requiredProperties,

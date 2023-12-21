@@ -2,9 +2,9 @@ import {PublishCommand, SNSClient} from '@aws-sdk/client-sns'
 import {AlarmMessage} from '../types'
 
 export const sendAlarm = (snsClient: SNSClient,
-                          wellConfigurationTopicArn: string,
+                          topicArn: string,
                           message: AlarmMessage) =>
     snsClient.send(new PublishCommand({
-        TopicArn: wellConfigurationTopicArn,
+        TopicArn: topicArn,
         Message: JSON.stringify(message),
     }))

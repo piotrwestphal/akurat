@@ -1,7 +1,6 @@
 import * as request from 'supertest'
 import {Response} from 'supertest'
 import {MainTable, ProfileType, testAdminEmail} from '../../lib/consts'
-import {ImageRef} from '../../lib/entity.types'
 import {ProfileCreateRequest, ProfileResponse} from '../../lib/profiles/profiles-mgmt.types'
 import {deleteAllItemsFromTable} from '../aws-helpers'
 import {authorizationHeaderKey, defaultUserToken, testMainTableName, testRestApiEndpoint} from '../config'
@@ -37,7 +36,7 @@ describe('Create a profile api tests', () => {
                 expect(profileType).toEqual(ProfileType.BRAND)
                 expect(displayName).toEqual('New Brand')
                 expect(instagramProfile).toEqual('some-profile_Name')
-                expect(profileImage).toStrictEqual({key: '', origKey: '', thumbKey: ''} satisfies ImageRef)
+                expect(profileImage).not.toBeDefined()
                 expect(createdAt > now).toBeTruthy()
                 expect(updatedAt > now).toBeTruthy()
             })
@@ -64,7 +63,6 @@ describe('Create a profile api tests', () => {
             profileType: ProfileType.BRAND,
             displayName: 'New Brand',
             instagramProfile: 'some-profile_Name',
-            profileImage: {key: '', origKey: '', thumbKey: ''},
         } satisfies ProfileCreateRequest
 
         await req.post('api/v1/profiles')
@@ -82,7 +80,6 @@ describe('Create a profile api tests', () => {
             profileType: 'TEST' as ProfileType,
             displayName: 'New Brand',
             instagramProfile: 'some-profile_Name',
-            profileImage: {key: '', origKey: '', thumbKey: ''},
         } satisfies ProfileCreateRequest
 
         await req.post('api/v1/profiles')
