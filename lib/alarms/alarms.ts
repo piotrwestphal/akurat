@@ -6,9 +6,10 @@ import {Construct} from 'constructs'
 import {join} from 'path'
 import {globalCommonLambdaProps} from '../cdk.consts'
 import {awsSdkV3ModuleName} from '../consts'
-import {LambdaLayerDef} from '../types'
+import {AlarmsParams, LambdaLayerDef} from '../types'
 
 type AlarmsProps = Readonly<{
+    alarms: AlarmsParams
     alarmsTopic: Topic
     httpLayer: LambdaLayerDef
     logRetention: RetentionDays
@@ -19,6 +20,7 @@ export class Alarms extends Construct {
     constructor(scope: Construct,
                 id: string,
                 {
+                    alarms: {webhookUrl},
                     alarmsTopic,
                     httpLayer,
                     logRetention,
@@ -39,7 +41,7 @@ export class Alarms extends Construct {
             },
             layers: [httpLayer.layerVer],
             environment: {
-                WEBHOOK_URL: 'https://discord.com/api/webhooks/1187311517545267221/os42C_jRsANQS9o1oHQoIvgNSGpv4jVRiKEzjhjrHxQQ69HE97JJSXno-1gd11LU1xWO',
+                WEBHOOK_URL: webhookUrl,
             },
             ...commonProps,
         })

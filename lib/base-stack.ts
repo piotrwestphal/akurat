@@ -24,7 +24,7 @@ import {
 } from './consts'
 import {ImagesMgmt} from './images/images-mgmt'
 import {ProfilesMgmt} from './profiles/profiles-mgmt'
-import {AuthServiceMockParams, AuthServiceParams, DistributionParams, LambdaLayerDef} from './types'
+import {AlarmsParams, AuthServiceMockParams, AuthServiceParams, DistributionParams, LambdaLayerDef} from './types'
 
 type BaseStackProps = Readonly<{
     envName: string
@@ -34,6 +34,7 @@ type BaseStackProps = Readonly<{
     resourceRemovalPolicy?: RemovalPolicy
     distribution?: DistributionParams
     mainTableProps?: Partial<TableProps>
+    alarms?: AlarmsParams
     mainInitialData?: InitialData
 }> & StackProps
 
@@ -48,6 +49,7 @@ export class BaseStack extends Stack {
                     logRetention,
                     distribution,
                     mainTableProps,
+                    alarms,
                     mainInitialData,
                     ...props
                 }: BaseStackProps) {
@@ -93,8 +95,6 @@ export class BaseStack extends Stack {
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
 
-        const alarmsTopic = new Topic(this, 'AlarmsTopic')
-
         const sharpLayer = {
             layerVer: new LayerVersion(this, 'SharpClient', {
                 layerVersionName: `${this.stackName}SharpClient`,
@@ -115,7 +115,7 @@ export class BaseStack extends Stack {
                 removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
             }),
             // the same as the package name
-            moduleName: 'http-client'
+            moduleName: 'http-client',
         } satisfies LambdaLayerDef
 
         let authorizer: IAuthorizer
@@ -186,11 +186,15 @@ export class BaseStack extends Stack {
             })
         }
 
-        new Alarms(this, 'Alarms', {
-            alarmsTopic,
-            httpLayer,
-            logRetention
-        })
+        if (alarms) {
+            const alarmsTopic = new Topic(this, 'AlarmsTopic')
+            new Alarms(this, 'Alarms', {
+                alarms,
+                alarmsTopic,
+                httpLayer,
+                logRetention,
+            })
+        }
 
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})

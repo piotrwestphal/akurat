@@ -20,6 +20,10 @@ export type UserParams = Readonly<{
     password: string
 }>
 
+export type AlarmsParams = Readonly<{
+    webhookUrl: string
+}>
+
 export type DistributionParams = Readonly<{
     distributionArtifactsS3KeyPrefix: string
     distributionParamsFilename: string
