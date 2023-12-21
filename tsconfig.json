@@ -28,6 +28,9 @@
       "@lambda-types": [
         "lib/lambda.types"
       ],
+      "http-client": [
+        "layers/http-client/nodejs/node_modules/http-client"
+      ]
     },
     "allowSyntheticDefaultImports": true
   },

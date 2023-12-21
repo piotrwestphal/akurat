@@ -5,9 +5,11 @@ import {AttributeType, BillingMode, Table, TableProps} from 'aws-cdk-lib/aws-dyn
 import {Code, LayerVersion, Runtime} from 'aws-cdk-lib/aws-lambda'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
+import {Topic} from 'aws-cdk-lib/aws-sns'
 import {StringParameter} from 'aws-cdk-lib/aws-ssm'
 import {Construct} from 'constructs'
 import {join} from 'path'
+import {Alarms} from './alarms/alarms'
 import {AuthServiceMock} from './auth-service-mock/auth-service-mock'
 import {Cdn} from './cdn/cdn'
 import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializer'
@@ -91,15 +93,29 @@ export class BaseStack extends Stack {
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
 
+        const alarmsTopic = new Topic(this, 'Alarms')
+
         const sharpLayer = {
             layerVer: new LayerVersion(this, 'SharpClient', {
                 layerVersionName: `${this.stackName}SharpClient`,
                 description: 'Sharp client',
-                compatibleRuntimes: [Runtime.NODEJS_18_X],
+                compatibleRuntimes: [Runtime.NODEJS_20_X],
                 code: Code.fromAsset(join('layers', 'sharp-client')),
                 removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
             }),
             moduleName: 'sharp',
+        } satisfies LambdaLayerDef
+
+        const httpLayer = {
+            layerVer: new LayerVersion(this, 'HttpClient', {
+                layerVersionName: `${this.stackName}HttpClient`,
+                description: 'Http client',
+                compatibleRuntimes: [Runtime.NODEJS_20_X],
+                code: Code.fromAsset(join('layers', 'http-client')),
+                removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
+            }),
+            // the same as the package name
+            moduleName: 'http-client'
         } satisfies LambdaLayerDef
 
         let authorizer: IAuthorizer
@@ -169,6 +185,12 @@ export class BaseStack extends Stack {
                 logRetention,
             })
         }
+
+        new Alarms(this, 'Alarms', {
+            alarmsTopic,
+            httpLayer,
+            logRetention
+        })
 
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
