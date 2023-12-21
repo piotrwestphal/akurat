@@ -1,7 +1,8 @@
 import {HttpError, post} from 'http-client'
 
 const webhookUrl = process.env.WEBHOOK_URL as string
-export const handler = async () => {
+export const handler = async (ev: any) => {
+    console.log('EVENT', ev)
     const message = 'Alarm!!'
 
     try {
