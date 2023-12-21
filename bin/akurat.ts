@@ -42,7 +42,7 @@ new BaseStack(app, 'dev-AkuratStack', {
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
     },
     alarms: {
-        webhookUrl: 'https://discord.com/api/webhooks/1187311517545267221/os42C_jRsANQS9o1oHQoIvgNSGpv4jVRiKEzjhjrHxQQ69HE97JJSXno-1gd11LU1xWO',
+        webhookUrl: 'https://discord.com/api/webhooks/1187322909694382131/Ov-00Bwdsrs0hz3GFr9EkiKeU3oTm8GGA3YCVf86z-vjlUFiiZrC3p7Wv5QK9qDzlKVr',
     },
     resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
