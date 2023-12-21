@@ -7,10 +7,10 @@ import {assetsBucketTempS3Key, cloudfrontAssetsPrefix} from '../../lib/consts'
 import {UploadImageResponse} from '../../lib/profiles/profiles-mgmt.types'
 import {deleteAllObjectsFromBucket, getObjectFromBucket} from '../aws-helpers'
 import {
-    assetsBucketName,
     assetsDirPath,
     authorizationHeaderKey,
     defaultUserToken,
+    testAssetsBucketName,
     testRestApiEndpoint,
 } from '../config'
 
@@ -19,7 +19,7 @@ describe('Create an image api tests', () => {
     const req = request(testRestApiEndpoint)
 
     beforeEach(async () => {
-        await deleteAllObjectsFromBucket(assetsBucketName, assetsBucketTempS3Key)
+        await deleteAllObjectsFromBucket(testAssetsBucketName, cloudfrontAssetsPrefix)
     })
 
     test('POST "/images" should keep the original image format and create a thumbnail image', async () => {
@@ -61,7 +61,7 @@ describe('Create an image api tests', () => {
 
         const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
         const [prvwOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
         expect(prvwOut).toBeDefined()
@@ -105,7 +105,7 @@ describe('Create an image api tests', () => {
 
         const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
         const [prvwOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
         expect(prvwOut).toBeDefined()
@@ -148,7 +148,7 @@ describe('Create an image api tests', () => {
 
         const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
         const [prvwOut, origOut, thmbOut] = await Promise.all(pendingGetObjects)
 
         expect(prvwOut).toBeDefined()

@@ -4,6 +4,7 @@ import {
     distributionDomainNameOutputKey,
     ImageType,
     mainTableNameOutputKey,
+    processImageQueueUrlOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
 } from './consts'
@@ -46,6 +47,7 @@ export type CdkOutputs = Readonly<{
     [mainTableNameOutputKey]: string
     [restApiEndpointOutputKey]: string
     [userPoolClientIdOutputKey]: string
+    [processImageQueueUrlOutputKey]: string
     [distributionDomainNameOutputKey]: string
     [assetsBucketNameOutputKey]: string
 }>

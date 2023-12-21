@@ -20,6 +20,7 @@ import {
     cloudfrontAssetsPrefix,
     MainTable,
     mainTableNameOutputKey,
+    processImageQueueUrlOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
 } from './consts'
@@ -205,5 +206,6 @@ export class BaseStack extends Stack {
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
         new CfnOutput(this, assetsBucketNameOutputKey, {value: assetsBucket.bucketName})
+        new CfnOutput(this, processImageQueueUrlOutputKey, {value: processImageQueue.queueUrl})
     }
 }
