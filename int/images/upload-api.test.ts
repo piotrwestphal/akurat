@@ -93,13 +93,13 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {orig, prvw, thmb} = res.body as UploadImageResponse
+        const {prvw, orig, thmb} = res.body as UploadImageResponse
         expect(prvw.key).toBeDefined()
         expect(orig.key).toBeDefined()
         expect(thmb.key).toBeDefined()
 
-        expect(prvw.key.endsWith('.jpeg')).toBeTruthy()
-        expect(orig.key.endsWith('.webp')).toBeTruthy()
+        expect(prvw.key.endsWith('.webp')).toBeTruthy()
+        expect(orig.key.endsWith('.jpeg')).toBeTruthy()
         expect(thmb.key.endsWith('.webp')).toBeTruthy()
         expect(prvw.key).not.toBe(orig.key)
 

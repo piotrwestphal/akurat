@@ -30,7 +30,7 @@ export const handler = async ({
         console.log(`Creating profile for an email address [${email}]`)
         await dynamoClient.send(new PutItemCommand({
             TableName: tableName,
-            Item: marshall(itemToCreate),
+            Item: marshall(itemToCreate, {removeUndefinedValues: true}),
         }))
         console.log(`Profile for an email address [${email}] has been created. Item PK: [${itemToCreate.pk}] SK: [${itemToCreate.sk}]`)
 
