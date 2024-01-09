@@ -95,6 +95,12 @@ export class BaseStack extends Stack {
             billingMode: BillingMode.PROVISIONED,
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
+        // TODO: finish here - add index for fetching with a profile type attribute
+        // mainTable.addLocalSecondaryIndex({
+        //     sortKey: {
+        //         name:
+        //     }
+        // })
 
         const processImageQueue = new Queue(this, 'ProcessImageQueue')
         const alarmsTopic = new Topic(this, 'AlarmsTopic')

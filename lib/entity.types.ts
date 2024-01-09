@@ -22,8 +22,8 @@ export type ImageVariants = Readonly<{
 export interface ProfileEntity extends TimeStamps {
     readonly [MainTable.PK]: MainPkValue.PROFILE
     readonly [MainTable.SK]: string                 // cognito sub
-    readonly email: string
     readonly profileType: ProfileType
+    readonly email: string
     readonly displayName: string
     readonly instagramProfile: string
     readonly profileImage?: ImageVariants
