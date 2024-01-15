@@ -7,10 +7,10 @@ import {assetsBucketTempS3Key, cloudfrontAssetsPrefix} from '../../lib/consts'
 import {UploadImageResponse} from '../../lib/profiles/profiles-mgmt.types'
 import {deleteAllObjectsFromBucket, getObjectFromBucket} from '../aws-helpers'
 import {
-    assetsBucketName,
     assetsDirPath,
     authorizationHeaderKey,
     defaultUserToken,
+    testAssetsBucketName,
     testRestApiEndpoint,
 } from '../config'
 
@@ -19,7 +19,7 @@ describe('Create an image api tests', () => {
     const req = request(testRestApiEndpoint)
 
     beforeEach(async () => {
-        await deleteAllObjectsFromBucket(assetsBucketName, assetsBucketTempS3Key)
+        await deleteAllObjectsFromBucket(testAssetsBucketName, cloudfrontAssetsPrefix)
     })
 
     test('POST "/images" should keep the original image format and create a thumbnail image', async () => {
@@ -31,33 +31,49 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {key, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(key).toBeDefined()
-        expect(origKey).toBeDefined()
-        expect(thumbKey).toBeDefined()
-        expect(key.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
-        expect(key.endsWith('.webp')).toBeTruthy()
-        expect(origKey.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
-        expect(origKey.endsWith('.webp')).toBeTruthy()
-        expect(thumbKey.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
-        expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(key).toBe(origKey)
+        const {prvw, orig, thmb} = res.body as UploadImageResponse
+        expect(prvw).toBeDefined()
+        expect(orig).toBeDefined()
+        expect(thmb).toBeDefined()
 
-        const pendingGetObjects = [key, origKey, thumbKey]
+        expect(prvw.id).toBeDefined()
+        expect(prvw.key.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
+        expect(prvw.key.endsWith('.webp')).toBeTruthy()
+        expect(prvw.ext).toBe('webp')
+        expect(prvw.width).toBe(750)
+        expect(prvw.height).toBe(750)
+
+        expect(orig.id).toBeDefined()
+        expect(orig.key.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
+        expect(orig.key.endsWith('.webp')).toBeTruthy()
+        expect(orig.ext).toBe('webp')
+        expect(orig.width).toBe(750)
+        expect(orig.height).toBe(750)
+
+        expect(thmb.id).toBeDefined()
+        expect(thmb.key.startsWith(`/${cloudfrontAssetsPrefix}/${assetsBucketTempS3Key}/`)).toBeTruthy()
+        expect(thmb.key.endsWith('.webp')).toBeTruthy()
+        expect(thmb.ext).toBe('webp')
+        expect(thmb.width).toBe(200)
+        expect(thmb.height).toBe(200)
+
+        expect(prvw).toStrictEqual(orig)
+
+        const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
-        const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
+        const [prvwOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
-        expect(imgOut).toBeDefined()
+        expect(prvwOut).toBeDefined()
         expect(origOut).toBeDefined()
         expect(thumbOut).toBeDefined()
 
-        const [imgBuffer, origBuffer, thumbBuffer] = await Promise.all([imgOut!, origOut!, thumbOut!].map(out => out.transformToByteArray()))
-        const [imgMeta, origMeta, thumbMeta] = await Promise.all([imgBuffer, origBuffer, thumbBuffer].map(buff => sharp(buff).metadata()))
+        const [prvwBuffer, origBuffer, thumbBuffer] = await Promise.all([prvwOut!, origOut!, thumbOut!].map(out => out.transformToByteArray()))
+        const [prvwMeta, origMeta, thumbMeta] = await Promise.all([prvwBuffer, origBuffer, thumbBuffer].map(buff => sharp(buff).metadata()))
 
-        expect(imgMeta.format).toBe(sharp.format.webp.id)
-        expect(imgMeta.width).toBe(750)
-        expect(imgMeta.height).toBe(750)
+        expect(prvwMeta.format).toBe(sharp.format.webp.id)
+        expect(prvwMeta.width).toBe(750)
+        expect(prvwMeta.height).toBe(750)
 
         expect(origMeta.format).toBe(sharp.format.webp.id)
         expect(origMeta.width).toBe(750)
@@ -77,30 +93,31 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {key, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(key).toBeDefined()
-        expect(origKey).toBeDefined()
-        expect(thumbKey).toBeDefined()
-        expect(key.endsWith('.webp')).toBeTruthy()
-        expect(origKey.endsWith('.jpeg')).toBeTruthy()
-        expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(key).not.toBe(origKey)
+        const {prvw, orig, thmb} = res.body as UploadImageResponse
+        expect(prvw.key).toBeDefined()
+        expect(orig.key).toBeDefined()
+        expect(thmb.key).toBeDefined()
 
-        const pendingGetObjects = [key, origKey, thumbKey]
+        expect(prvw.key.endsWith('.webp')).toBeTruthy()
+        expect(orig.key.endsWith('.jpeg')).toBeTruthy()
+        expect(thmb.key.endsWith('.webp')).toBeTruthy()
+        expect(prvw.key).not.toBe(orig.key)
+
+        const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
-        const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
+        const [prvwOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
 
-        expect(imgOut).toBeDefined()
+        expect(prvwOut).toBeDefined()
         expect(origOut).toBeDefined()
         expect(thumbOut).toBeDefined()
 
-        const [imgBuffer, origBuffer, thumbBuffer] = await Promise.all([imgOut!, origOut!, thumbOut!].map(out => out.transformToByteArray()))
-        const [imgMeta, origMeta, thumbMeta] = await Promise.all([imgBuffer, origBuffer, thumbBuffer].map(buff => sharp(buff).metadata()))
+        const [prvwBuffer, origBuffer, thumbBuffer] = await Promise.all([prvwOut!, origOut!, thumbOut!].map(out => out.transformToByteArray()))
+        const [prvwMeta, origMeta, thumbMeta] = await Promise.all([prvwBuffer, origBuffer, thumbBuffer].map(buff => sharp(buff).metadata()))
 
-        expect(imgMeta.format).toBe(sharp.format.webp.id)
-        expect(imgMeta.width).toBe(612)
-        expect(imgMeta.height).toBe(408)
+        expect(prvwMeta.format).toBe(sharp.format.webp.id)
+        expect(prvwMeta.width).toBe(612)
+        expect(prvwMeta.height).toBe(408)
 
         expect(origMeta.format).toBe(sharp.format.jpeg.id)
         expect(origMeta.width).toBe(612)
@@ -120,38 +137,40 @@ describe('Create an image api tests', () => {
             .expect('Content-Type', /json/)
             .expect(201)
 
-        const {key, origKey, thumbKey} = res.body as UploadImageResponse
-        expect(key).toBeDefined()
-        expect(origKey).toBeDefined()
-        expect(thumbKey).toBeDefined()
-        expect(key.endsWith('.webp')).toBeTruthy()
-        expect(origKey.endsWith('.jpeg')).toBeTruthy()
-        expect(thumbKey.endsWith('.webp')).toBeTruthy()
-        expect(key).not.toBe(origKey)
+        const {prvw, orig, thmb} = res.body as UploadImageResponse
+        expect(prvw.key).toBeDefined()
+        expect(orig.key).toBeDefined()
+        expect(thmb.key).toBeDefined()
+        expect(prvw.key.endsWith('.webp')).toBeTruthy()
+        expect(orig.key.endsWith('.jpeg')).toBeTruthy()
+        expect(thmb.key.endsWith('.webp')).toBeTruthy()
+        expect(prvw.key).not.toBe(orig.key)
 
-        const pendingGetObjects = [key, origKey, thumbKey]
+        const pendingGetObjects = [prvw.key, orig.key, thmb.key]
             .map(key => removeFirstSlash(key))
-            .map(key => getObjectFromBucket(assetsBucketName, key))
-        const [imgOut, origOut, thumbOut] = await Promise.all(pendingGetObjects)
+            .map(key => getObjectFromBucket(testAssetsBucketName, key))
+        const [prvwOut, origOut, thmbOut] = await Promise.all(pendingGetObjects)
 
-        expect(imgOut).toBeDefined()
+        expect(prvwOut).toBeDefined()
         expect(origOut).toBeDefined()
-        expect(thumbOut).toBeDefined()
+        expect(thmbOut).toBeDefined()
 
-        const [imgBuffer, origBuffer, thumbBuffer] = await Promise.all([imgOut!, origOut!, thumbOut!].map(out => out.transformToByteArray()))
-        const [imgMeta, origMeta, thumbMeta] = await Promise.all([imgBuffer, origBuffer, thumbBuffer].map(buff => sharp(buff).metadata()))
+        const [prvwBuffer, origBuffer, thmbBuffer] = await Promise.all([prvwOut!, origOut!, thmbOut!]
+            .map(out => out.transformToByteArray()))
+        const [prvwMeta, origMeta, thmbMeta] = await Promise.all([prvwBuffer, origBuffer, thmbBuffer]
+            .map(buff => sharp(buff).metadata()))
 
-        expect(imgMeta.format).toBe(sharp.format.webp.id)
-        expect(imgMeta.width).toBe(530)
-        expect(imgMeta.height).toBe(796)
+        expect(prvwMeta.format).toBe(sharp.format.webp.id)
+        expect(prvwMeta.width).toBe(530)
+        expect(prvwMeta.height).toBe(796)
 
         expect(origMeta.format).toBe(sharp.format.jpeg.id)
         expect(origMeta.width).toBe(530)
         expect(origMeta.height).toBe(796)
 
-        expect(thumbMeta.format).toBe(sharp.format.webp.id)
-        expect(thumbMeta.width).toBe(133)
-        expect(thumbMeta.height).toBe(200)
+        expect(thmbMeta.format).toBe(sharp.format.webp.id)
+        expect(thmbMeta.width).toBe(133)
+        expect(thmbMeta.height).toBe(200)
     }, 5000)
 
     test('POST "/images" should fail due to too large payload [1]', async () => {

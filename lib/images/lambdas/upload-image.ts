@@ -4,6 +4,7 @@ import {randomUUID} from 'crypto'
 // import in this form is used here intentionally
 import sharp, {Metadata, ResizeOptions} from 'sharp'
 import {assetsBucketTempS3Key, cloudfrontAssetsPrefix} from '../../consts'
+import {ImgRef} from '../../entity.types'
 import {UploadImageRequest, UploadImageResponse} from '../../profiles/profiles-mgmt.types'
 
 const bucketName = process.env.BUCKET_NAME as string
@@ -67,38 +68,65 @@ export const handler = async ({
             .toBuffer()
         const thumbImgMeta = await sharp(thumbImgBuffer).metadata()
 
-        const origImgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${origImgMeta.format}`
-        const thumbImgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${thumbImgMeta.format}`
+        const origId = randomUUID()
+        const orig = {
+            id: origId,
+            key: `/${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${origId}.${origImgMeta.format}`,
+            ext: origImgMeta.format!,
+            width: origImgMeta.width!,
+            height: origImgMeta.height!,
+        } satisfies ImgRef
+
+        const thmbId = randomUUID()
+        const thmb = {
+            id: thmbId,
+            key: `/${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${thmbId}.${thumbImgMeta.format}`,
+            ext: thumbImgMeta.format!,
+            width: thumbImgMeta.width!,
+            height: thumbImgMeta.height!,
+        } satisfies ImgRef
 
         const imgsToSave = [
-            {image: origImgBuffer, key: origImgS3Key},
-            {image: thumbImgBuffer, key: thumbImgS3Key},
+            {image: origImgBuffer, key: orig.key, mimeType: `image/${orig.ext}`},
+            {image: thumbImgBuffer, key: thmb.key, mimeType: `image/${thmb.ext}`},
         ]
 
-        let imgS3Key: string
+        let prvw: ImgRef
 
         // if the original format is a '.webp'
         if (origImgMeta.format === sharp.format.webp.id) {
-            imgS3Key = origImgS3Key
+            prvw = orig
         } else {
-            const imgBuffer = await sharp(origImgBuffer).webp().toBuffer()
-            const imgMeta = await sharp(thumbImgBuffer).metadata()
-            imgS3Key = `${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${randomUUID()}.${imgMeta.format}`
-            imgsToSave.push({image: imgBuffer, key: imgS3Key})
+            const prvwImgBuffer = await sharp(origImgBuffer).webp().toBuffer()
+            const prvwImgMeta = await sharp(thumbImgBuffer).metadata()
+
+            const prvwId = randomUUID()
+            prvw = {
+                id: prvwId,
+                key: `/${cloudfrontAssetsPrefix}/${s3TempPrefixForUser}/${prvwId}.${prvwImgMeta.format}`,
+                ext: prvwImgMeta.format!,
+                width: prvwImgMeta.width!,
+                height: prvwImgMeta.height!,
+            }
+            imgsToSave.push({image: prvwImgBuffer, key: prvw.key, mimeType: `image/${prvw.ext}`})
         }
 
-        await Promise.all(imgsToSave.map(v => s3Client.send(new PutObjectCommand({
-            Bucket: bucketName,
-            Key: v.key,
-            Body: v.image,
-        }))))
+        await Promise.all(imgsToSave
+            .map(v => ({...v, key: removeFirstSlash(v.key)}))
+            .map(v => s3Client.send(new PutObjectCommand({
+                Bucket: bucketName,
+                Key: v.key,
+                Body: v.image,
+                ContentType: v.mimeType,
+            }))))
 
-        const key = `/${imgS3Key}`
-        const origKey = `/${origImgS3Key}`
-        const thumbKey = `/${thumbImgS3Key}`
         return {
             statusCode: 201,
-            body: JSON.stringify({key, thumbKey, origKey} satisfies UploadImageResponse),
+            body: JSON.stringify({
+                prvw,
+                orig,
+                thmb,
+            } satisfies UploadImageResponse),
         }
     } catch (err) {
         console.error(`Error during uploading an image for a user with email [${claims.email}]`, err)
@@ -109,3 +137,5 @@ export const handler = async ({
         }
     }
 }
+
+const removeFirstSlash = (s3Key: string) => s3Key.replace(/^\//, '')

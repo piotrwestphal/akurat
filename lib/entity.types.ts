@@ -5,10 +5,18 @@ export interface TimeStamps {
     readonly updatedAt: number
 }
 
-export type ImageRef = Readonly<{
+export type ImgRef = Readonly<{
+    id: string
     key: string
-    origKey: string
-    thumbKey: string
+    ext: string
+    width: number
+    height: number
+}>
+
+export type ImageVariants = Readonly<{
+    prvw: ImgRef        // preview
+    orig: ImgRef        // original
+    thmb: ImgRef        // thumbnail
 }>
 
 export interface ProfileEntity extends TimeStamps {
@@ -18,5 +26,5 @@ export interface ProfileEntity extends TimeStamps {
     readonly profileType: ProfileType
     readonly displayName: string
     readonly instagramProfile: string
-    readonly profileImage: ImageRef
+    readonly profileImage?: ImageVariants
 }

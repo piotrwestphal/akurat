@@ -41,6 +41,9 @@ new BaseStack(app, 'dev-AkuratStack', {
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/c394dec0-266f-456f-a43a-78e6a1a49677',
     },
+    alarms: {
+        webhookUrl: 'https://discord.com/api/webhooks/1187322909694382131/Ov-00Bwdsrs0hz3GFr9EkiKeU3oTm8GGA3YCVf86z-vjlUFiiZrC3p7Wv5QK9qDzlKVr',
+    },
     resourceRemovalPolicy: RemovalPolicy.DESTROY,
     logRetention: RetentionDays.ONE_WEEK,
     mainInitialData,
@@ -71,6 +74,9 @@ new BaseStack(app, 'prod-AkuratStack', {
         distributionParamsFilename: 'config.json',
         edgeLambdaVerArn: 'arn:aws:lambda:us-east-1:412644677543:function:AkuratEdgeStack-EdgeLambdaA5DBBF2D-t2lIV2FgBfLM:7',
         certArn: 'arn:aws:acm:us-east-1:412644677543:certificate/728c3af2-42d8-4e68-a599-aa5a23ce7997',
+    },
+    alarms: {
+        webhookUrl: 'https://discord.com/api/webhooks/1187311517545267221/os42C_jRsANQS9o1oHQoIvgNSGpv4jVRiKEzjhjrHxQQ69HE97JJSXno-1gd11LU1xWO',
     },
     mainTableProps: {
         pointInTimeRecovery: true,

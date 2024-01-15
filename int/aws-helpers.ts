@@ -5,8 +5,21 @@ import {
     GetUserCommand,
     InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider'
-import {BatchWriteItemCommand, DynamoDBClient, PutItemCommand, ScanCommand} from '@aws-sdk/client-dynamodb'
-import {DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, S3Client} from '@aws-sdk/client-s3'
+import {
+    BatchWriteItemCommand,
+    DynamoDBClient,
+    GetItemCommand,
+    PutItemCommand,
+    ScanCommand,
+} from '@aws-sdk/client-dynamodb'
+import {
+    DeleteObjectsCommand,
+    GetObjectCommand,
+    ListObjectsV2Command,
+    PutObjectCommand,
+    S3Client,
+} from '@aws-sdk/client-s3'
+import {SendMessageCommand, SQSClient} from '@aws-sdk/client-sqs'
 import {marshall, unmarshall} from '@aws-sdk/util-dynamodb'
 import {UserParams} from '../lib/types'
 import {splitIntoChunks} from '../lib/utils'
@@ -14,6 +27,7 @@ import {splitIntoChunks} from '../lib/utils'
 const dynamoDbClient = new DynamoDBClient({region: 'eu-central-1'})
 const cognitoClient = new CognitoIdentityProviderClient({region: 'eu-central-1'})
 const s3Client = new S3Client({region: 'eu-central-1'})
+const sqsClient = new SQSClient({region: 'eu-central-1'})
 
 export const putItemIntoTable = <T extends Record<string, any>>(TableName: string,
                                                                 Item: T) =>
@@ -45,11 +59,33 @@ export const deleteAllItemsFromTable = async (TableName: string, [pk, sk]: [pk: 
     }
 }
 
+export const putObjectIntoBucket = async (bucketName: string, s3Key: string, body: string) =>
+    s3Client.send(new PutObjectCommand({
+        Bucket: bucketName,
+        Key: s3Key,
+        Body: body,
+    }))
+
+export const getItemFromTableWhenAttributeChange = async <T>(TableName: string,
+                                                             itemKey: Partial<T>,
+                                                             attrChange: (v: T) => boolean) => {
+    const action = async () => {
+        const output = await dynamoDbClient.send(new GetItemCommand({TableName, Key: marshall(itemKey)}))
+        return output.Item ? unmarshall(output.Item) as T : null
+    }
+    return retryUntilConditionMet(
+        action,
+        (v) => v ? attrChange(v) : false,
+        500,
+        10)
+}
+
+
 export const getObjectFromBucket = async (bucketName: string, s3key: string) => {
     try {
         const output = await s3Client.send(new GetObjectCommand({
             Bucket: bucketName,
-            Key: s3key
+            Key: s3key,
         }))
         return output.Body
     } catch (err) {
@@ -100,3 +136,33 @@ export const getUser = async (accessToken: string) =>
     cognitoClient.send(new GetUserCommand({
         AccessToken: accessToken,
     }))
+
+export const sendMessageToQueue = <T extends Record<string, any>>(queueUrl: string,
+                                                                  message: T) =>
+    sqsClient.send(new SendMessageCommand({
+        QueueUrl: queueUrl,
+        MessageBody: JSON.stringify(message),
+    }))
+
+const retryUntilConditionMet = async <T = any>(action: () => Promise<T>,
+                                               condition: (v: T) => boolean,
+                                               retryInterval = 500,
+                                               maxAttemptCount = 10): Promise<T | null> => {
+    let lastResult = null
+    for (let attempted = 0; attempted < maxAttemptCount; attempted++) {
+        if (attempted > 0) {
+            await sleep(retryInterval)
+        }
+        const result = await action()
+        if (condition(result)) {
+            console.debug(`Condition met after [${attempted}] retry attempts at [${retryInterval}] ms intervals`)
+            return result
+        }
+        lastResult = result
+    }
+    console.log(`Condition not met after [${maxAttemptCount}] retry attempts at [${retryInterval}] ms intervals. ` +
+        `Result of Last invoked action: `, lastResult)
+    return lastResult as T | null
+}
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

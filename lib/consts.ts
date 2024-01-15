@@ -2,6 +2,7 @@ export const awsSdkV3ModuleName = '@aws-sdk'
 export const mainTableNameOutputKey = 'MainTableName'
 export const restApiEndpointOutputKey = 'RestApiEndpoint'
 export const userPoolClientIdOutputKey = 'UserPoolClientId'
+export const processImageQueueUrlOutputKey = 'ProcessImageQueueUrl'
 export const distributionDomainNameOutputKey = 'DistributionDomainName'
 export const assetsBucketNameOutputKey = 'AssetsBucketName'
 export const assetsBucketImagesS3Key = 'images'
@@ -24,4 +25,8 @@ export enum ProfileType {
     MODEL = 'MODEL',
     PHOTO = 'PHOTO',
     BRAND = 'BRAND'
+}
+
+export enum ImageType {
+    PROFILE = 'PROFILE',
 }

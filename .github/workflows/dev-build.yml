@@ -44,7 +44,7 @@ jobs:
           aws-region: eu-central-1
 
       - name: AWS CDK synth
-        run: | 
+        run: |
           cdk synth ${{ env.CDK_STACK_NAME }} --context domainName=${{ secrets.DOMAIN_NAME }}
 
       - name: AWS CDK diff
@@ -56,8 +56,14 @@ jobs:
         with:
           script: |
             var fs = require('fs')
-            const diff = fs.readFileSync('${{ env.CDK_DIFF_OUT_FILE }}').toString().trimEnd()
-            const output = ['👋 Below you find the result of running the command on the \`${{ env.CDK_STACK_NAME }}\` AWS CDK Stack']
+            const issueDescriptionLengthLimit = 65536
+            const issueDescriptionLengthSafeLimit = issueDescriptionLengthLimit - 536
+            const limitMsg = 'The rest was cut off due to the github description length limit'
+            let diff = fs.readFileSync('${{ inputs.cdk-stack-path }}/${{ inputs.diff-out-file }}').toString().trimEnd()
+            if (diff.length > issueDescriptionLengthSafeLimit) {
+              diff = diff.substring(0, issueDescriptionLengthSafeLimit).concat('\n\n!!! The rest was cut off due to the github description length limit !!!')
+            }
+            const output = ['👋 Below you find the result of running the command on the \`${{ inputs.cdk-stack }}\` AWS CDK Stack']
             output.push(['<details><summary>AWS CDK diff</summary>\n\n\`\`\`\n' + diff + '\n\`\`\`\n</details>\n'])
             output.push([`*Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`])
             github.rest.issues.createComment({

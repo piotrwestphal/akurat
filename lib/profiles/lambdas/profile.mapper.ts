@@ -23,12 +23,12 @@ export const toProfileResponse = ({
 })
 
 export const toProfileEntity = ({
+                                    sub,
                                     profileType,
                                     displayName,
                                     instagramProfile,
-                                    sub,
                                     email,
-                                    profileImage = {key: '', thumbKey: '', origKey: ''},
+                                    profileImage,
                                 }: ProfileCreateRequest & Readonly<{ sub: string, email: string }>,
                                 now = Date.now()): ProfileEntity => ({
     pk: MainPkValue.PROFILE,

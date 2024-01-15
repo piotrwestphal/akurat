@@ -2,6 +2,7 @@ import {LambdaIntegration, Resource, RestApi} from 'aws-cdk-lib/aws-apigateway'
 import {Table} from 'aws-cdk-lib/aws-dynamodb'
 import {NodejsFunction, NodejsFunctionProps} from 'aws-cdk-lib/aws-lambda-nodejs'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
+import {Queue} from 'aws-cdk-lib/aws-sqs'
 import {Construct} from 'constructs'
 import {join} from 'path'
 import {globalCommonLambdaProps} from '../cdk.consts'
@@ -9,6 +10,7 @@ import {profileCreateReqSchema} from './schemas/profile-create-req.schema'
 
 type ProfilesMgmtProps = Readonly<{
     mainTable: Table
+    processImageQueue: Queue
     restApi: RestApi
     restApiV1Resource: Resource
     logRetention: RetentionDays
@@ -20,6 +22,7 @@ export class ProfilesMgmt extends Construct {
                 id: string,
                 {
                     mainTable,
+                    processImageQueue,
                     restApi,
                     restApiV1Resource,
                     logRetention,
@@ -62,11 +65,10 @@ export class ProfilesMgmt extends Construct {
             entry: join(__dirname, 'lambdas', 'create-profile.ts'),
             environment: {
                 TABLE_NAME: mainTable.tableName,
+                QUEUE_URL: processImageQueue.queueUrl,
             },
             ...commonProps,
         })
-        mainTable.grantWriteData(createFunc)
-
         profilesResource.addMethod('POST', new LambdaIntegration(createFunc),
             {
                 requestValidator: restApi.addRequestValidator('CreateProfileReqBodyValidator', {
@@ -79,5 +81,7 @@ export class ProfilesMgmt extends Construct {
                     }),
                 },
             })
+        mainTable.grantWriteData(createFunc)
+        processImageQueue.grantSendMessages(createFunc)
     }
 }

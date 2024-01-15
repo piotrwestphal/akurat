@@ -5,9 +5,12 @@ import {AttributeType, BillingMode, Table, TableProps} from 'aws-cdk-lib/aws-dyn
 import {Code, LayerVersion, Runtime} from 'aws-cdk-lib/aws-lambda'
 import {RetentionDays} from 'aws-cdk-lib/aws-logs'
 import {BlockPublicAccess, Bucket} from 'aws-cdk-lib/aws-s3'
+import {Topic} from 'aws-cdk-lib/aws-sns'
+import {Queue} from 'aws-cdk-lib/aws-sqs'
 import {StringParameter} from 'aws-cdk-lib/aws-ssm'
 import {Construct} from 'constructs'
 import {join} from 'path'
+import {Alarms} from './alarms/alarms'
 import {AuthServiceMock} from './auth-service-mock/auth-service-mock'
 import {Cdn} from './cdn/cdn'
 import {DynamoDataInitializer, InitialData} from './common/dynamo-data-initializer'
@@ -17,12 +20,13 @@ import {
     cloudfrontAssetsPrefix,
     MainTable,
     mainTableNameOutputKey,
+    processImageQueueUrlOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
 } from './consts'
 import {ImagesMgmt} from './images/images-mgmt'
 import {ProfilesMgmt} from './profiles/profiles-mgmt'
-import {AuthServiceMockParams, AuthServiceParams, DistributionParams, LambdaLayerDef} from './types'
+import {AlarmsParams, AuthServiceMockParams, AuthServiceParams, DistributionParams, LambdaLayerDef} from './types'
 
 type BaseStackProps = Readonly<{
     envName: string
@@ -32,10 +36,10 @@ type BaseStackProps = Readonly<{
     resourceRemovalPolicy?: RemovalPolicy
     distribution?: DistributionParams
     mainTableProps?: Partial<TableProps>
+    alarms?: AlarmsParams
     mainInitialData?: InitialData
 }> & StackProps
 
-// TODO: deal with proper content-type in the webapp returned from cdn
 export class BaseStack extends Stack {
     constructor(scope: Construct,
                 id: string, {
@@ -46,6 +50,7 @@ export class BaseStack extends Stack {
                     logRetention,
                     distribution,
                     mainTableProps,
+                    alarms,
                     mainInitialData,
                     ...props
                 }: BaseStackProps) {
@@ -91,15 +96,30 @@ export class BaseStack extends Stack {
             removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
         })
 
+        const processImageQueue = new Queue(this, 'ProcessImageQueue')
+        const alarmsTopic = new Topic(this, 'AlarmsTopic')
+
         const sharpLayer = {
             layerVer: new LayerVersion(this, 'SharpClient', {
                 layerVersionName: `${this.stackName}SharpClient`,
                 description: 'Sharp client',
-                compatibleRuntimes: [Runtime.NODEJS_18_X],
+                compatibleRuntimes: [Runtime.NODEJS_20_X],
                 code: Code.fromAsset(join('layers', 'sharp-client')),
                 removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
             }),
             moduleName: 'sharp',
+        } satisfies LambdaLayerDef
+
+        const httpLayer = {
+            layerVer: new LayerVersion(this, 'HttpClient', {
+                layerVersionName: `${this.stackName}HttpClient`,
+                description: 'Http client',
+                compatibleRuntimes: [Runtime.NODEJS_20_X],
+                code: Code.fromAsset(join('layers', 'http-client')),
+                removalPolicy: resourceRemovalPolicy || RemovalPolicy.RETAIN,
+            }),
+            // the same as the package name
+            moduleName: 'http-client',
         } satisfies LambdaLayerDef
 
         let authorizer: IAuthorizer
@@ -149,15 +169,19 @@ export class BaseStack extends Stack {
 
         new ProfilesMgmt(this, 'ProfilesMgmt', {
             mainTable,
+            processImageQueue,
             restApi,
             restApiV1Resource,
             logRetention,
         })
 
         new ImagesMgmt(this, 'ImagesMgmt', {
+            mainTable,
+            assetsBucket,
+            processImageQueue,
+            alarmsTopic,
             restApiV1Resource,
             sharpLayer,
-            assetsBucket,
             logRetention,
         })
 
@@ -170,8 +194,18 @@ export class BaseStack extends Stack {
             })
         }
 
+        if (alarms) {
+            new Alarms(this, 'Alarms', {
+                alarms,
+                alarmsTopic,
+                httpLayer,
+                logRetention,
+            })
+        }
+
         new CfnOutput(this, mainTableNameOutputKey, {value: mainTable.tableName})
         new CfnOutput(this, restApiEndpointOutputKey, {value: restApi.url})
         new CfnOutput(this, assetsBucketNameOutputKey, {value: assetsBucket.bucketName})
+        new CfnOutput(this, processImageQueueUrlOutputKey, {value: processImageQueue.queueUrl})
     }
 }

@@ -2,10 +2,13 @@ import {LayerVersion} from 'aws-cdk-lib/aws-lambda'
 import {
     assetsBucketNameOutputKey,
     distributionDomainNameOutputKey,
+    ImageType,
     mainTableNameOutputKey,
+    processImageQueueUrlOutputKey,
     restApiEndpointOutputKey,
     userPoolClientIdOutputKey,
 } from './consts'
+import {ImageVariants} from './entity.types'
 
 export type WebappDistributionParams = Readonly<{
     webappBucketName: string
@@ -18,6 +21,10 @@ export type WebappDistributionParams = Readonly<{
 export type UserParams = Readonly<{
     email: string
     password: string
+}>
+
+export type AlarmsParams = Readonly<{
+    webhookUrl: string
 }>
 
 export type DistributionParams = Readonly<{
@@ -40,6 +47,7 @@ export type CdkOutputs = Readonly<{
     [mainTableNameOutputKey]: string
     [restApiEndpointOutputKey]: string
     [userPoolClientIdOutputKey]: string
+    [processImageQueueUrlOutputKey]: string
     [distributionDomainNameOutputKey]: string
     [assetsBucketNameOutputKey]: string
 }>
@@ -47,4 +55,15 @@ export type CdkOutputs = Readonly<{
 export type LambdaLayerDef = Readonly<{
     layerVer: LayerVersion
     moduleName: string
+}>
+
+export type AlarmMessage = Readonly<{
+    source: string
+    payload: Readonly<{ message: string, details: string }>
+}>
+
+export type ProcessImageMessage = Readonly<{
+    profileId: string
+    type: ImageType
+    imgVars: ImageVariants
 }>
